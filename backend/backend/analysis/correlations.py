@@ -1,4 +1,5 @@
 import datetime
+import math
 
 import pandas as pd
 from scipy import stats
@@ -126,12 +127,23 @@ def compute_pairwise_correlation(
     else:
         coeff, p_value = stats.pearsonr(clean[var_a], clean[var_b])
 
+    coeff_f = float(coeff)
+    p_value_f = float(p_value)
+    if math.isnan(coeff_f) or math.isnan(p_value_f):
+        return {
+            "coefficient": None,
+            "p_value": None,
+            "n": len(clean),
+            "method": method,
+            "significant": False,
+        }
+
     return {
-        "coefficient": round(float(coeff), 3),
-        "p_value": round(float(p_value), 4),
+        "coefficient": round(coeff_f, 3),
+        "p_value": round(p_value_f, 4),
         "n": len(clean),
         "method": method,
-        "significant": p_value < 0.05,
+        "significant": bool(p_value_f < 0.05),
     }
 
 
@@ -154,7 +166,7 @@ def compute_lag_correlation(
                 "coefficient": round(float(coeff), 3),
                 "p_value": round(float(p_value), 4),
                 "n": len(temp_df),
-                "significant": p_value < 0.05,
+                "significant": bool(p_value < 0.05),
             }
         )
     return results
