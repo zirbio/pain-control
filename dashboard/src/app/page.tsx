@@ -6,6 +6,7 @@ import { MetricCard } from "@/components/metric-card";
 import { PainTimeline } from "@/components/pain-timeline";
 import { WeeklyHeatmap } from "@/components/weekly-heatmap";
 import { NavBar } from "@/components/nav-bar";
+import { AlertsPanel } from "@/components/alerts-panel";
 import { useEntries } from "@/hooks/use-entries";
 
 export default function DashboardPage() {
@@ -114,11 +115,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-6 flex items-center justify-center h-40">
-          <span className="text-text-muted font-body text-body">
-            Alerts Panel — coming in Phase 5
-          </span>
-        </div>
+        <AlertsPanel />
       </main>
     </div>
   );
