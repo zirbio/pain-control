@@ -3,6 +3,8 @@
 import { format, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { MetricCard } from "@/components/metric-card";
+import { PainTimeline } from "@/components/pain-timeline";
+import { WeeklyHeatmap } from "@/components/weekly-heatmap";
 import { NavBar } from "@/components/nav-bar";
 import { useEntries } from "@/hooks/use-entries";
 
@@ -12,6 +14,12 @@ export default function DashboardPage() {
   const endDate = format(today, "yyyy-MM-dd");
   const { data: entries, isLoading } = useEntries({
     start_date: startDate,
+    end_date: endDate,
+  });
+
+  const heatmapStart = format(subDays(today, 35), "yyyy-MM-dd");
+  const { data: heatmapEntries } = useEntries({
+    start_date: heatmapStart,
     end_date: endDate,
   });
 
@@ -98,15 +106,11 @@ export default function DashboardPage() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="md:col-span-2 bg-bg-secondary border border-bg-tertiary rounded-card p-6 h-80 flex items-center justify-center">
-            <span className="text-text-muted font-body text-body">
-              Pain Timeline — coming in Phase 5
-            </span>
+          <div className="md:col-span-2 bg-bg-secondary border border-bg-tertiary rounded-card p-4 h-80">
+            <PainTimeline entries={entries ?? []} />
           </div>
-          <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-6 h-80 flex items-center justify-center">
-            <span className="text-text-muted font-body text-body">
-              Weekly Heatmap — coming in Phase 5
-            </span>
+          <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-4 h-80">
+            <WeeklyHeatmap entries={heatmapEntries ?? []} />
           </div>
         </div>
 
