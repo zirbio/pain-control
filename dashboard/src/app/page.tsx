@@ -1,63 +1,119 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { format, subDays } from "date-fns";
+import { es } from "date-fns/locale";
+import { MetricCard } from "@/components/metric-card";
+import { NavBar } from "@/components/nav-bar";
+import { useEntries } from "@/hooks/use-entries";
+
+export default function DashboardPage() {
+  const today = new Date();
+  const startDate = format(subDays(today, 7), "yyyy-MM-dd");
+  const endDate = format(today, "yyyy-MM-dd");
+  const { data: entries, isLoading } = useEntries({
+    start_date: startDate,
+    end_date: endDate,
+  });
+
+  const painValues = entries
+    ?.map((e) => {
+      const max = Math.max(...e.pain_records.map((p) => p.intensity), 0);
+      return max;
+    })
+    .reverse();
+
+  const avgPain =
+    painValues && painValues.length > 0
+      ? painValues.reduce((a, b) => a + b, 0) / painValues.length
+      : null;
+
+  const sleepValues = entries
+    ?.map((e) => e.apple_health_records[0]?.sleep_hours ?? null)
+    .filter((v): v is number => v !== null)
+    .reverse();
+
+  const avgSleep =
+    sleepValues && sleepValues.length > 0
+      ? sleepValues.reduce((a, b) => a + b, 0) / sleepValues.length
+      : null;
+
+  const activeDays =
+    entries?.filter((e) => e.activity_records.length > 0).length ?? 0;
+  const totalDays = entries?.length ?? 0;
+
+  const medEffValues = entries
+    ?.flatMap((e) => e.medication_records)
+    .map((m) => m.effectiveness)
+    .filter((v): v is number => v !== null);
+
+  const avgMedEff =
+    medEffValues && medEffValues.length > 0
+      ? medEffValues.reduce((a, b) => a + b, 0) / medEffValues.length
+      : null;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen pb-20 md:pb-0">
+      <NavBar />
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        <div className="mb-8">
+          <h1 className="font-display text-h1 font-semibold text-text-primary">
+            Pain Control
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="font-body text-body text-text-secondary mt-1">
+            {format(today, "EEEE, d 'de' MMMM", { locale: es })}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="skeleton h-32" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <MetricCard
+              label="Dolor · 7d"
+              value={avgPain}
+              colorScale="pain"
+              sparklineData={painValues}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <MetricCard
+              label="Sueño · 7d"
+              value={avgSleep}
+              unit="h"
+              sparklineData={sleepValues}
+            />
+            <MetricCard
+              label="Activo"
+              value={`${activeDays}/${totalDays}`}
+              unit="días"
+            />
+            <MetricCard
+              label="Captor"
+              value={avgMedEff}
+              unit="/10"
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="md:col-span-2 bg-bg-secondary border border-bg-tertiary rounded-card p-6 h-80 flex items-center justify-center">
+            <span className="text-text-muted font-body text-body">
+              Pain Timeline — coming in Phase 5
+            </span>
+          </div>
+          <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-6 h-80 flex items-center justify-center">
+            <span className="text-text-muted font-body text-body">
+              Weekly Heatmap — coming in Phase 5
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-6 flex items-center justify-center h-40">
+          <span className="text-text-muted font-body text-body">
+            Alerts Panel — coming in Phase 5
+          </span>
         </div>
       </main>
     </div>
