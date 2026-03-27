@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routers import entries
+from backend.api.routers import entries, imports
 from backend.core.config import get_settings
 
 settings = get_settings()
@@ -17,6 +17,7 @@ app.add_middleware(
 )
 
 app.include_router(entries.router)
+app.include_router(imports.router)
 
 
 @app.get("/api/health")
