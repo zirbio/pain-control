@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Database
+data/*.db
+data/*.db-journal
+
+# Environment
+.env
+.env.local
+
+# Node
+node_modules/
+.next/
+dashboard/.next/
+dashboard/node_modules/
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Imports (keep dir, ignore data)
+data/imports/*
+!data/imports/.gitkeep
