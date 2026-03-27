@@ -347,6 +347,103 @@ Optional fields (captured if mentioned, not prompted): activity, stress, nutriti
 
 Desktop-first, responsive for iPhone consultation.
 
+### Visual Design System: "Warm Observatory"
+
+Aesthetic direction: a personal research instrument — precise, warm, empowering. Dark mode with warm earth tones. The feel of a scientist's notebook, not a hospital dashboard.
+
+#### Color palette
+
+```
+// Backgrounds (warm dark)
+--bg-primary:     #1C1917   // stone-900, main background
+--bg-secondary:   #292524   // stone-800, cards
+--bg-tertiary:    #44403C   // stone-700, elevated elements
+--bg-surface:     #1A1412   // warmer tone for highlighted areas
+
+// Text
+--text-primary:   #F5F5F4   // stone-100
+--text-secondary: #A8A29E   // stone-400
+--text-muted:     #78716C   // stone-500
+
+// Pain scale (sage → amber → cinnabar)
+--pain-0:   #6B8A7A   // sage — no pain
+--pain-1:   #7B9A7E
+--pain-2:   #8DAA82
+--pain-3:   #A8B86A   // sage-lime — mild
+--pain-4:   #C4A84E
+--pain-5:   #D4A03A   // amber — moderate
+--pain-6:   #D9882A
+--pain-7:   #D4702A   // warm orange
+--pain-8:   #C4512A   // cinnabar — severe
+--pain-9:   #A63A2A
+--pain-10:  #8B2500   // deep terracotta — maximum
+
+// Functional accents
+--accent-positive:  #6B8A7A  // sage, improvement
+--accent-warning:   #D4A03A  // amber, attention
+--accent-negative:  #C4512A  // cinnabar, worsening
+--accent-info:      #7B9FBF  // warm gray-blue, neutral
+--accent-highlight: #D4A03A  // amber for data highlights
+
+// Atmospheric background (barometric pressure)
+--atmo-high:    #2A3040   // gray-blue — high pressure, clear sky
+--atmo-normal:  #1C1917   // neutral
+--atmo-low:     #2A2018   // diffuse amber — low pressure, storm
+```
+
+#### Typography
+
+```
+// Display & large numbers
+font-family: 'Newsreader', Georgia, serif;
+// Headlines: 600 weight, tracking -0.02em
+// Metric numbers: 500 weight, 3rem+, tabular-nums
+
+// Body & UI
+font-family: 'Satoshi', system-ui, sans-serif;
+// Body: 400 weight, 1rem, line-height 1.6
+// Labels: 500 weight, 0.75rem, uppercase, tracking 0.08em
+// Small data: 400 weight, tabular-nums
+
+// Size scale
+--text-metric:  3rem      // large card number
+--text-h1:      1.75rem   // page title
+--text-h2:      1.25rem   // section/card title
+--text-body:    0.9375rem // body text
+--text-label:   0.75rem   // labels, chart axes
+--text-small:   0.6875rem // secondary data
+```
+
+#### Key component patterns
+
+**Metric Card**: stone-800 bg, 1px stone-700 border, 12px radius. Label in Satoshi uppercase stone-400. Number in Newsreader 3rem, color-coded to pain scale. Sparkline underneath in matching palette. Hover: translateY(-2px) + warm diffuse shadow.
+
+**Alert Card**: stone-800 bg with slightly warmer tint. 3px solid left border in amber. Diamond icon + uppercase label. Body in Satoshi. Hover: left border widens to 5px.
+
+**Pain Timeline (hero component)**: Atmospheric background gradient that shifts with barometric pressure — gray-blue for high pressure days, amber diffuse for low pressure. Pain lines use curveNatural interpolation (d3), 2px stroke, no dots except on hover. Each pain location in a distinct color (lumbar=cinnabar, ankle=amber, sciatica=sage-lime). Hover: vertical crosshair + tooltip with full day detail. Click: navigate to History.
+
+**Correlation Matrix**: Triangular heatmap (lower half only). Sage for negative correlation, stone-800 for none, cinnabar for positive. Hover: highlight row+column, show coefficient. Click: scatter plot flyout panel.
+
+**Weekly Heatmap**: GitHub-contributions style. Cells with 4px radius, 3px gap. Pain scale colors. No-data cells: stone-800 with dotted stone-700 border. Hover: scale(1.15) + tooltip.
+
+**Calendar (History)**: Each day shows pain dot (color-coded max intensity) + minimal icons for notable events. Selected day: amber ring, stone-700 bg. Click: side panel with full day detail.
+
+#### Micro-interactions
+
+- Numbers: count-up animation on load (400ms, ease-out)
+- Page transitions: fade + translateY(8px), 200ms
+- Loading skeletons: stone-700 with warm shimmer
+- All transitions: ease-out curves, nothing bouncy
+
+#### Responsive (iPhone)
+
+- Metric cards: 2x2 grid
+- Pain timeline: full width, horizontal scroll for >7 days
+- Heatmap: below timeline
+- Alerts: vertical stack
+- Nav: fixed bottom bar with icons
+- Correlation matrix: scroll both axes, pinch-to-zoom
+
 ## Tech Stack Summary
 
 | Layer | Technology |
