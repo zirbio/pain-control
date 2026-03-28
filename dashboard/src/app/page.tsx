@@ -30,7 +30,8 @@ export default function DashboardPage() {
   });
 
   const painValues = entries
-    ?.map((e) => (e.pain_records.length > 0 ? Math.max(...e.pain_records.map((p) => p.intensity)) : 0))
+    ?.filter((e) => e.pain_records.length > 0)
+    .map((e) => Math.max(...e.pain_records.map((p) => p.intensity)))
     .reverse();
 
   const avgPain = average(painValues ?? []);

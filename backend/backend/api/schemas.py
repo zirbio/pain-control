@@ -180,10 +180,3 @@ class DailyEntryResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class DailyEntrySummary(BaseModel):
-    id: int
-    date: datetime.date
-    max_pain_intensity: int | None
-    pain_locations: list[str]
-
-    model_config = {"from_attributes": True}

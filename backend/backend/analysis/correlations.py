@@ -120,6 +120,12 @@ def compute_pairwise_correlation(
 def compute_lag_correlation(
     df: pd.DataFrame, target: str, variable: str, max_lag: int = 3
 ) -> list[dict]:
+    """Compute cross-correlation between target and variable at different time offsets.
+
+    Positive lag means: how does today's variable correlate with pain N days later.
+    Negative lag means: how does today's variable correlate with pain N days earlier.
+    Lag 0 is same-day correlation.
+    """
     results = []
     for lag in range(-max_lag, max_lag + 1):
         shifted = df[variable] if lag == 0 else df[variable].shift(-lag)

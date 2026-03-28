@@ -33,6 +33,7 @@ export interface WeatherRecord {
 export interface AppleHealthRecord {
   id: number;
   sleep_hours: number | null;
+  sleep_quality: string | null;
   resting_hr: number | null;
   hrv_ms: number | null;
   steps: number | null;
@@ -51,19 +52,22 @@ export interface DailyEntry {
     time_taken: string | null;
     effectiveness: number | null;
   }>;
-  mood_records: Array<{ id: number; score: number; emotions: string | null }>;
+  mood_records: Array<{ id: number; score: number; emotions: string | null; notes: string | null }>;
   activity_records: Array<{
     id: number;
     type: string;
     duration_min: number | null;
     pain_effect: string | null;
+    notes: string | null;
   }>;
-  stress_records: Array<{ id: number; level: number; source: string | null }>;
+  stress_records: Array<{ id: number; level: number; source: string | null; notes: string | null }>;
   nutrition_records: Array<{
     id: number;
+    meals: string | null;
     alcohol: boolean | null;
     caffeine_cups: number | null;
     water_liters: number | null;
+    notes: string | null;
   }>;
   weather_records: WeatherRecord[];
   apple_health_records: AppleHealthRecord[];
