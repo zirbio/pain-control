@@ -5,6 +5,8 @@ description: Daily pain check-in — parse natural language input, extract struc
 
 # Daily Pain Check-In
 
+**Before starting**: Read `personal/medical-context.md` if it exists — it contains the user's actual medication names, pain locations, and field mappings.
+
 Parse the user's free-form description of their day and save structured data.
 
 ## Process
