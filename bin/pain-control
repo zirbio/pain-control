@@ -1,0 +1,323 @@
+#!/bin/bash
+set -euo pipefail
+
+# ── Pain Control Service Manager ──────────────────────────────────────────────
+# Manages backend (FastAPI) and dashboard (Next.js) via macOS launchd agents.
+#
+# Usage:
+#   pain-control start|stop|restart|status|logs|open|install|uninstall
+# ──────────────────────────────────────────────────────────────────────────────
+
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BACKEND_LABEL="com.pain-control.backend"
+DASHBOARD_LABEL="com.pain-control.dashboard"
+LAUNCH_AGENTS_DIR="$HOME/Library/LaunchAgents"
+PLIST_SRC_DIR="$PROJECT_ROOT/launchd"
+LOG_DIR="$PROJECT_ROOT/data/logs"
+API_PORT=8420
+WEB_PORT=3420
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+_info()  { echo -e "${CYAN}▸${NC} $*"; }
+_ok()    { echo -e "${GREEN}✓${NC} $*"; }
+_warn()  { echo -e "${YELLOW}⚠${NC} $*"; }
+_err()   { echo -e "${RED}✗${NC} $*"; }
+_bold()  { echo -e "${BOLD}$*${NC}"; }
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+_is_installed() {
+    [ -f "$LAUNCH_AGENTS_DIR/$1.plist" ]
+}
+
+_is_loaded() {
+    launchctl print "gui/$(id -u)/$1" &>/dev/null
+}
+
+_is_running() {
+    local pid
+    pid=$(_pid_for "$1")
+    [ -n "$pid" ] && [ "$pid" != "0" ] && kill -0 "$pid" 2>/dev/null
+}
+
+_pid_for() {
+    launchctl print "gui/$(id -u)/$1" 2>/dev/null | grep -m1 "pid =" | awk '{print $3}'
+}
+
+_ensure_installed() {
+    if ! _is_installed "$BACKEND_LABEL" || ! _is_installed "$DASHBOARD_LABEL"; then
+        _warn "Agents not installed. Running install first..."
+        _do_install
+    fi
+}
+
+_ensure_logs_dir() {
+    mkdir -p "$LOG_DIR"
+}
+
+_ensure_env() {
+    # Create dashboard .env.local if missing
+    local env_file="$PROJECT_ROOT/dashboard/.env.local"
+    if [ ! -f "$env_file" ] || ! grep -q "NEXT_PUBLIC_API_URL" "$env_file" 2>/dev/null; then
+        echo "NEXT_PUBLIC_API_URL=http://localhost:$API_PORT" > "$env_file"
+        _info "Created $env_file"
+    fi
+
+    # Create backend .env if missing
+    local backend_env="$PROJECT_ROOT/backend/.env"
+    if [ ! -f "$backend_env" ]; then
+        if [ -f "$PROJECT_ROOT/backend/.env.example" ]; then
+            cp "$PROJECT_ROOT/backend/.env.example" "$backend_env"
+            _warn "Created backend/.env from .env.example — edit it to add your API keys"
+        fi
+    fi
+}
+
+# ── Generate plists with correct paths ────────────────────────────────────────
+
+_generate_plists() {
+    local venv_path="$PROJECT_ROOT/backend/.venv"
+    local node_path
+    node_path="$(dirname "$(which node)")"
+
+    # Backend plist
+    cat > "$PLIST_SRC_DIR/$BACKEND_LABEL.plist" << PLISTEOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>$BACKEND_LABEL</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$venv_path/bin/uvicorn</string>
+        <string>backend.api.main:app</string>
+        <string>--host</string>
+        <string>127.0.0.1</string>
+        <string>--port</string>
+        <string>$API_PORT</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>$PROJECT_ROOT/backend</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>$venv_path/bin:$node_path:/usr/bin:/bin</string>
+        <key>VIRTUAL_ENV</key>
+        <string>$venv_path</string>
+        <key>API_PORT</key>
+        <string>$API_PORT</string>
+        <key>CORS_ORIGINS</key>
+        <string>["http://localhost:3000","http://localhost:$WEB_PORT"]</string>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>$LOG_DIR/backend.log</string>
+    <key>StandardErrorPath</key>
+    <string>$LOG_DIR/backend.error.log</string>
+    <key>KeepAlive</key>
+    <false/>
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
+PLISTEOF
+
+    # Dashboard plist
+    cat > "$PLIST_SRC_DIR/$DASHBOARD_LABEL.plist" << PLISTEOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>$DASHBOARD_LABEL</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>$node_path/npx</string>
+        <string>next</string>
+        <string>dev</string>
+        <string>--port</string>
+        <string>$WEB_PORT</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>$PROJECT_ROOT/dashboard</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>$node_path:/usr/bin:/bin</string>
+        <key>NEXT_PUBLIC_API_URL</key>
+        <string>http://localhost:$API_PORT</string>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>$LOG_DIR/dashboard.log</string>
+    <key>StandardErrorPath</key>
+    <string>$LOG_DIR/dashboard.error.log</string>
+    <key>KeepAlive</key>
+    <false/>
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
+PLISTEOF
+}
+
+# ── Commands ──────────────────────────────────────────────────────────────────
+
+_do_install() {
+    _ensure_logs_dir
+    _ensure_env
+    _generate_plists
+
+    mkdir -p "$LAUNCH_AGENTS_DIR"
+    cp "$PLIST_SRC_DIR/$BACKEND_LABEL.plist" "$LAUNCH_AGENTS_DIR/"
+    cp "$PLIST_SRC_DIR/$DASHBOARD_LABEL.plist" "$LAUNCH_AGENTS_DIR/"
+
+    _ok "Agents installed in $LAUNCH_AGENTS_DIR"
+}
+
+_do_uninstall() {
+    _do_stop 2>/dev/null || true
+    rm -f "$LAUNCH_AGENTS_DIR/$BACKEND_LABEL.plist"
+    rm -f "$LAUNCH_AGENTS_DIR/$DASHBOARD_LABEL.plist"
+    _ok "Agents removed from $LAUNCH_AGENTS_DIR"
+}
+
+_do_start() {
+    _ensure_installed
+    _ensure_logs_dir
+    _ensure_env
+
+    local uid
+    uid="$(id -u)"
+
+    # Bootstrap if not loaded, then kickstart to actually run
+    if ! _is_loaded "$BACKEND_LABEL"; then
+        launchctl bootstrap "gui/$uid" "$LAUNCH_AGENTS_DIR/$BACKEND_LABEL.plist" 2>/dev/null || true
+    fi
+    launchctl kickstart "gui/$uid/$BACKEND_LABEL" 2>/dev/null && _ok "Backend started on port $API_PORT" || _warn "Backend already running"
+
+    if ! _is_loaded "$DASHBOARD_LABEL"; then
+        launchctl bootstrap "gui/$uid" "$LAUNCH_AGENTS_DIR/$DASHBOARD_LABEL.plist" 2>/dev/null || true
+    fi
+    launchctl kickstart "gui/$uid/$DASHBOARD_LABEL" 2>/dev/null && _ok "Dashboard started on port $WEB_PORT" || _warn "Dashboard already running"
+
+    sleep 1
+    _do_status
+}
+
+_do_stop() {
+    local uid
+    uid="$(id -u)"
+
+    if _is_loaded "$BACKEND_LABEL"; then
+        launchctl bootout "gui/$uid/$BACKEND_LABEL" 2>/dev/null || true
+        _ok "Backend stopped"
+    else
+        _warn "Backend not running"
+    fi
+
+    if _is_loaded "$DASHBOARD_LABEL"; then
+        launchctl bootout "gui/$uid/$DASHBOARD_LABEL" 2>/dev/null || true
+        _ok "Dashboard stopped"
+    else
+        _warn "Dashboard not running"
+    fi
+}
+
+_do_restart() {
+    _do_stop
+    sleep 1
+    _do_start
+}
+
+_do_status() {
+    echo ""
+    _bold "  ◆ PAIN CONTROL STATUS"
+    echo ""
+
+    # Backend
+    if _is_running "$BACKEND_LABEL"; then
+        local bpid
+        bpid=$(_pid_for "$BACKEND_LABEL")
+        _ok "Backend     PID ${bpid:-?}    http://localhost:$API_PORT/docs"
+    else
+        _err "Backend     not running"
+    fi
+
+    # Dashboard
+    if _is_running "$DASHBOARD_LABEL"; then
+        local dpid
+        dpid=$(_pid_for "$DASHBOARD_LABEL")
+        _ok "Dashboard   PID ${dpid:-?}    http://localhost:$WEB_PORT"
+    else
+        _err "Dashboard   not running"
+    fi
+
+    echo ""
+}
+
+_do_logs() {
+    local service="${1:-}"
+    case "$service" in
+        api|backend)
+            _info "Tailing backend logs (Ctrl+C to stop)..."
+            tail -f "$LOG_DIR/backend.log" "$LOG_DIR/backend.error.log"
+            ;;
+        web|dashboard)
+            _info "Tailing dashboard logs (Ctrl+C to stop)..."
+            tail -f "$LOG_DIR/dashboard.log" "$LOG_DIR/dashboard.error.log"
+            ;;
+        ""|all)
+            _info "Tailing all logs (Ctrl+C to stop)..."
+            tail -f "$LOG_DIR"/*.log
+            ;;
+        *)
+            _err "Unknown service: $service. Use: api, web, or all"
+            exit 1
+            ;;
+    esac
+}
+
+_do_open() {
+    open "http://localhost:$WEB_PORT"
+    _ok "Opened dashboard in browser"
+}
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+
+_usage() {
+    echo ""
+    _bold "  ◆ Pain Control"
+    echo ""
+    echo "  Usage: $(basename "$0") <command>"
+    echo ""
+    echo "  Commands:"
+    echo "    start        Start backend + dashboard"
+    echo "    stop         Stop all services"
+    echo "    restart      Restart all services"
+    echo "    status       Show service status"
+    echo "    logs [svc]   Tail logs (api|web|all)"
+    echo "    open         Open dashboard in browser"
+    echo "    install      Install launchd agents"
+    echo "    uninstall    Remove launchd agents"
+    echo ""
+}
+
+case "${1:-}" in
+    start)     _do_start ;;
+    stop)      _do_stop ;;
+    restart)   _do_restart ;;
+    status)    _do_status ;;
+    logs)      _do_logs "${2:-}" ;;
+    open)      _do_open ;;
+    install)   _do_install ;;
+    uninstall) _do_uninstall ;;
+    help|-h|--help) _usage ;;
+    *)         _usage; exit 1 ;;
+esac

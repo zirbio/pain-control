@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE HealthData [
+<!ATTLIST Record type CDATA "">
+<!ATTLIST Record sourceName CDATA "">
+<!ATTLIST Record unit CDATA "">
+<!ATTLIST Record value CDATA "">
+<!ATTLIST Record startDate CDATA "">
+<!ATTLIST Record endDate CDATA "">
+<!ATTLIST Record creationDate CDATA "">
+]>
+<HealthData locale="es_ES">
+ <Record type="HKQuantityTypeIdentifierStepCount" sourceName="Apple Watch" unit="count" value="8432" startDate="2026-03-27 00:00:00 +0100" endDate="2026-03-27 23:59:59 +0100" creationDate="2026-03-27 23:59:59 +0100"/>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Apple Watch" unit="count/min" value="62" startDate="2026-03-27 08:00:00 +0100" endDate="2026-03-27 08:00:00 +0100" creationDate="2026-03-27 08:05:00 +0100"/>
+ <Record type="HKQuantityTypeIdentifierRestingHeartRate" sourceName="Apple Watch" unit="count/min" value="58" startDate="2026-03-27 06:00:00 +0100" endDate="2026-03-27 06:00:00 +0100" creationDate="2026-03-27 06:05:00 +0100"/>
+ <Record type="HKQuantityTypeIdentifierHeartRateVariabilitySDNN" sourceName="Apple Watch" unit="ms" value="38.5" startDate="2026-03-27 07:00:00 +0100" endDate="2026-03-27 07:00:00 +0100" creationDate="2026-03-27 07:05:00 +0100"/>
+ <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" sourceName="Apple Watch" unit="kcal" value="340" startDate="2026-03-27 00:00:00 +0100" endDate="2026-03-27 23:59:59 +0100" creationDate="2026-03-27 23:59:59 +0100"/>
+ <Record type="HKQuantityTypeIdentifierOxygenSaturation" sourceName="Apple Watch" unit="%" value="0.97" startDate="2026-03-27 03:00:00 +0100" endDate="2026-03-27 03:00:00 +0100" creationDate="2026-03-27 03:05:00 +0100"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Apple Watch" value="HKCategoryValueSleepAnalysisAsleepCore" startDate="2026-03-26 23:30:00 +0100" endDate="2026-03-27 02:00:00 +0100" creationDate="2026-03-27 07:00:00 +0100"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Apple Watch" value="HKCategoryValueSleepAnalysisAsleepDeep" startDate="2026-03-27 02:00:00 +0100" endDate="2026-03-27 04:00:00 +0100" creationDate="2026-03-27 07:00:00 +0100"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Apple Watch" value="HKCategoryValueSleepAnalysisAsleepREM" startDate="2026-03-27 04:00:00 +0100" endDate="2026-03-27 06:00:00 +0100" creationDate="2026-03-27 07:00:00 +0100"/>
+</HealthData>
