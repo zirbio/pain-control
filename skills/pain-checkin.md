@@ -24,20 +24,28 @@ Parse the user's free-form description of their day and save structured data.
    - Required: at least one pain record (location + intensity), medication, mood score
    - Frame questions naturally: "¿Tomaste tu medicación hoy?" not "Medication name required"
 
-3. **Fetch weather**: Run this command to get today's weather:
-   ```bash
-   curl -s "http://localhost:8000/api/entries" | head -1
-   ```
-   Then fetch weather via the API (the API auto-fetches from OpenWeatherMap).
+3. **Determine date**: Default to **yesterday** unless the user specifies otherwise.
+   Compute yesterday's date programmatically (today minus 1 day).
 
-4. **Save entry**: POST to the API:
+4. **Fetch weather**: Fetch weather for the entry date via the API:
    ```bash
-   curl -X POST http://localhost:8000/api/entries \
+   curl -s -X POST "http://localhost:8420/api/weather/YYYY-MM-DD"
+   ```
+   Replace `YYYY-MM-DD` with the entry date (default: yesterday).
+   If the user mentions they are in a different city, add the city query param:
+   ```bash
+   curl -s -X POST "http://localhost:8420/api/weather/YYYY-MM-DD?city=CityName"
+   ```
+
+5. **Save entry**: POST to the API:
+   ```bash
+   curl -X POST http://localhost:8420/api/entries \
      -H "Content-Type: application/json" \
      -d '<structured JSON>'
    ```
+   Include `"date": "YYYY-MM-DD"` in the JSON body (yesterday's date by default).
 
-5. **Report back**: Confirm what was saved. If any alerts from recent data, mention them.
+6. **Report back**: Confirm what was saved. If any alerts from recent data, mention them.
 
 ## Field mapping
 
