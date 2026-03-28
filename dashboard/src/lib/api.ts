@@ -44,6 +44,8 @@ export interface AppleHealthRecord {
 export interface DailyEntry {
   id: number;
   date: string;
+  created_at: string;
+  updated_at: string;
   pain_records: PainRecord[];
   medication_records: Array<{
     id: number;
@@ -71,7 +73,7 @@ export interface DailyEntry {
   }>;
   weather_records: WeatherRecord[];
   apple_health_records: AppleHealthRecord[];
-  extras: Array<{ id: number; key: string; value: string; value_type: string }>;
+  extras: Array<{ id: number; key: string; value: string; value_type: string; first_seen: string | null }>;
 }
 
 export interface CorrelationResult {

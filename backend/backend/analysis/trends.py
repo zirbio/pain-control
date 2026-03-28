@@ -18,7 +18,7 @@ def compute_trend_direction(df: pd.DataFrame, column: str) -> dict:
     y = clean[column].values
     slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
 
-    if p_value > 0.05:
+    if np.isnan(p_value) or p_value > 0.05:
         direction = "stable"
     elif slope > 0:
         direction = "increasing"
@@ -44,10 +44,24 @@ def compare_periods(
     a = df.loc[period_a_start:period_a_end, column].dropna()
     b = df.loc[period_b_start:period_b_end, column].dropna()
 
+    a_mean = a.mean() if len(a) > 0 else None
+    b_mean = b.mean() if len(b) > 0 else None
+
+    if pd.isna(a_mean) or pd.isna(b_mean):
+        return {
+            "period_a_mean": None,
+            "period_b_mean": None,
+            "difference": None,
+            "p_value": None,
+            "significant": False,
+            "n_a": len(a),
+            "n_b": len(b),
+        }
+
     if len(a) < 3 or len(b) < 3:
         return {
-            "period_a_mean": round(float(a.mean()), 1) if len(a) > 0 else None,
-            "period_b_mean": round(float(b.mean()), 1) if len(b) > 0 else None,
+            "period_a_mean": round(float(a_mean), 1),
+            "period_b_mean": round(float(b_mean), 1),
             "difference": None,
             "p_value": None,
             "significant": False,
@@ -58,9 +72,9 @@ def compare_periods(
     stat, p_value = stats.mannwhitneyu(a, b, alternative="two-sided")
 
     return {
-        "period_a_mean": round(float(a.mean()), 1),
-        "period_b_mean": round(float(b.mean()), 1),
-        "difference": round(float(b.mean() - a.mean()), 1),
+        "period_a_mean": round(float(a_mean), 1),
+        "period_b_mean": round(float(b_mean), 1),
+        "difference": round(float(b_mean - a_mean), 1),
         "p_value": round(float(p_value), 4),
         "significant": p_value < 0.05,
         "n_a": len(a),

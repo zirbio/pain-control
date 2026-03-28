@@ -77,13 +77,13 @@ function PeriodSummary({
     );
   }
 
-  if (!report) {
+  if (!report || !report.period) {
     return (
       <div className="flex-1">
         <span className="font-body text-label uppercase text-text-muted tracking-widest">
           {label}
         </span>
-        <p className="font-body text-small text-text-muted mt-1">Select dates</p>
+        <p className="font-body text-small text-text-muted mt-1">Sin datos</p>
       </div>
     );
   }

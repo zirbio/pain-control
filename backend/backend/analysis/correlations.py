@@ -3,7 +3,7 @@ import math
 
 import pandas as pd
 from scipy import stats
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from backend.db.models import (
     DailyEntry,
@@ -16,7 +16,17 @@ def build_daily_dataframe(
     end_date: datetime.date | None = None,
 ) -> pd.DataFrame:
     """Build a flat daily DataFrame from all record types for analysis."""
-    query = db.query(DailyEntry)
+    query = db.query(DailyEntry).options(
+        selectinload(DailyEntry.pain_records),
+        selectinload(DailyEntry.medication_records),
+        selectinload(DailyEntry.mood_records),
+        selectinload(DailyEntry.activity_records),
+        selectinload(DailyEntry.stress_records),
+        selectinload(DailyEntry.nutrition_records),
+        selectinload(DailyEntry.weather_records),
+        selectinload(DailyEntry.apple_health_records),
+        selectinload(DailyEntry.extras),
+    )
     if start_date:
         query = query.filter(DailyEntry.date >= start_date)
     if end_date:
@@ -79,18 +89,16 @@ def build_daily_dataframe(
     return df
 
 
+def _null_pairwise(n: int, method: str) -> dict:
+    return {"coefficient": None, "p_value": None, "n": n, "method": method, "significant": False}
+
+
 def compute_pairwise_correlation(
     df: pd.DataFrame, var_a: str, var_b: str, method: str = "spearman"
 ) -> dict:
     clean = df[[var_a, var_b]].dropna()
     if len(clean) < 5:
-        return {
-            "coefficient": None,
-            "p_value": None,
-            "n": len(clean),
-            "method": method,
-            "significant": False,
-        }
+        return _null_pairwise(len(clean), method)
 
     if method == "spearman":
         coeff, p_value = stats.spearmanr(clean[var_a], clean[var_b])
@@ -100,13 +108,7 @@ def compute_pairwise_correlation(
     coeff_f = float(coeff)
     p_value_f = float(p_value)
     if math.isnan(coeff_f) or math.isnan(p_value_f):
-        return {
-            "coefficient": None,
-            "p_value": None,
-            "n": len(clean),
-            "method": method,
-            "significant": False,
-        }
+        return _null_pairwise(len(clean), method)
 
     return {
         "coefficient": round(coeff_f, 3),
@@ -115,6 +117,10 @@ def compute_pairwise_correlation(
         "method": method,
         "significant": bool(p_value_f < 0.05),
     }
+
+
+def _null_result(lag: int, n: int) -> dict:
+    return {"lag": lag, "coefficient": None, "p_value": None, "n": n, "significant": False}
 
 
 def compute_lag_correlation(
@@ -132,21 +138,14 @@ def compute_lag_correlation(
 
         temp_df = pd.DataFrame({target: df[target], variable: shifted}).dropna()
         if len(temp_df) < 5:
-            results.append({"lag": lag, "coefficient": None, "p_value": None, "n": len(temp_df)})
+            results.append(_null_result(lag, len(temp_df)))
             continue
 
         coeff, p_value = stats.spearmanr(temp_df[target], temp_df[variable])
         if math.isnan(coeff):
-            results.append(
-                {
-                    "lag": lag,
-                    "coefficient": None,
-                    "p_value": None,
-                    "n": len(temp_df),
-                    "significant": False,
-                }
-            )
+            results.append(_null_result(lag, len(temp_df)))
             continue
+
         results.append(
             {
                 "lag": lag,

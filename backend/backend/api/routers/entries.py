@@ -2,7 +2,7 @@ import datetime
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from backend.api.dependencies import get_db
 from backend.api.schemas import DailyEntryCreate, DailyEntryResponse
@@ -86,7 +86,17 @@ def list_entries(
     limit: int = Query(default=90, ge=1, le=365),
     db: Session = Depends(get_db),
 ):
-    query = db.query(DailyEntry)
+    query = db.query(DailyEntry).options(
+        selectinload(DailyEntry.pain_records),
+        selectinload(DailyEntry.medication_records),
+        selectinload(DailyEntry.mood_records),
+        selectinload(DailyEntry.activity_records),
+        selectinload(DailyEntry.stress_records),
+        selectinload(DailyEntry.nutrition_records),
+        selectinload(DailyEntry.weather_records),
+        selectinload(DailyEntry.apple_health_records),
+        selectinload(DailyEntry.extras),
+    )
     if start_date:
         query = query.filter(DailyEntry.date >= start_date)
     if end_date:

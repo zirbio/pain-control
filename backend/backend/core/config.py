@@ -12,10 +12,9 @@ class Settings(BaseSettings):
     IMPORTS_DIR: str = ""
 
     # Weather
-    OPENWEATHERMAP_API_KEY: str = ""
-    WEATHER_LOCATION: str = "London"
-    WEATHER_LAT: float = 51.5074
-    WEATHER_LON: float = -0.1278
+    WEATHER_LOCATION: str = "Almería"
+    WEATHER_LAT: float = 36.8340
+    WEATHER_LON: float = -2.4637
 
     # Pain tracking
     PAIN_SCALE_MIN: int = 0

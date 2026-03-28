@@ -17,14 +17,6 @@ class DailyHealthData:
     spo2_pct: float | None = None
 
 
-QUANTITY_TYPES = {
-    "HKQuantityTypeIdentifierStepCount": "steps",
-    "HKQuantityTypeIdentifierRestingHeartRate": "resting_hr",
-    "HKQuantityTypeIdentifierHeartRateVariabilitySDNN": "hrv_ms",
-    "HKQuantityTypeIdentifierActiveEnergyBurned": "active_calories",
-    "HKQuantityTypeIdentifierOxygenSaturation": "spo2_pct",
-}
-
 SLEEP_TYPE = "HKCategoryTypeIdentifierSleepAnalysis"
 ASLEEP_VALUES = {
     "HKCategoryValueSleepAnalysisAsleepCore",

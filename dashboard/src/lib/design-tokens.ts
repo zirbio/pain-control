@@ -30,3 +30,18 @@ export const accentColors = {
   info: "#7B9FBF",
   highlight: "#D4A03A",
 } as const;
+
+/** Shared tick style for Recharts axes across all chart components. */
+export const chartTickStyle = {
+  fill: "#78716C",
+  fontSize: 11,
+  fontFamily: "Satoshi, system-ui, sans-serif",
+} as const;
+
+/** Shared grid style for Recharts CartesianGrid. */
+export const chartGridProps = {
+  strokeDasharray: "3 3",
+  stroke: "#44403C",
+  strokeOpacity: 0.3,
+  vertical: false,
+} as const;

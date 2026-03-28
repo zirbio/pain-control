@@ -13,6 +13,7 @@ import {
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import type { DailyEntry } from "@/lib/api";
+import { chartTickStyle, chartGridProps } from "@/lib/design-tokens";
 
 const LOCATION_COLORS: Record<string, string> = {
   lower_back: "#C4512A",
@@ -196,29 +197,16 @@ export function PainTimeline({ entries }: PainTimelineProps) {
           height="100%"
           fill="url(#atmosphericBg)"
         />
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="#44403C"
-          strokeOpacity={0.3}
-          vertical={false}
-        />
+        <CartesianGrid {...chartGridProps} />
         <XAxis
           dataKey="dateLabel"
-          tick={{
-            fill: "#78716C",
-            fontSize: 11,
-            fontFamily: "Satoshi, system-ui, sans-serif",
-          }}
+          tick={chartTickStyle}
           axisLine={{ stroke: "#44403C" }}
           tickLine={false}
         />
         <YAxis
           domain={[0, 10]}
-          tick={{
-            fill: "#78716C",
-            fontSize: 11,
-            fontFamily: "Satoshi, system-ui, sans-serif",
-          }}
+          tick={chartTickStyle}
           axisLine={false}
           tickLine={false}
           width={30}

@@ -12,7 +12,8 @@ import {
   Cell,
 } from "recharts";
 import { useLagCorrelation } from "@/hooks/use-analysis";
-import { accentColors } from "@/lib/design-tokens";
+import { accentColors, chartTickStyle, chartGridProps } from "@/lib/design-tokens";
+import { formatVariable } from "@/lib/utils";
 
 const TARGET = "pain_max";
 
@@ -31,10 +32,6 @@ const VARIABLES = [
   "alcohol",
   "caffeine_cups",
 ] as const;
-
-function formatLabel(name: string): string {
-  return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
 
 interface LagTooltipProps {
   active?: boolean;
@@ -87,7 +84,7 @@ export function LagExplorer() {
           >
             {VARIABLES.map((v) => (
               <option key={v} value={v}>
-                {formatLabel(v)}
+                {formatVariable(v)}
               </option>
             ))}
           </select>
@@ -115,30 +112,17 @@ export function LagExplorer() {
               data={lagData}
               margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
             >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="#44403C"
-                strokeOpacity={0.3}
-                vertical={false}
-              />
+              <CartesianGrid {...chartGridProps} />
               <XAxis
                 dataKey="lag"
-                tick={{
-                  fill: "#78716C",
-                  fontSize: 11,
-                  fontFamily: "Satoshi, system-ui, sans-serif",
-                }}
+                tick={chartTickStyle}
                 axisLine={{ stroke: "#44403C" }}
                 tickLine={false}
                 tickFormatter={(v: number) => (v > 0 ? `+${v}` : String(v))}
               />
               <YAxis
                 domain={[-1, 1]}
-                tick={{
-                  fill: "#78716C",
-                  fontSize: 11,
-                  fontFamily: "Satoshi, system-ui, sans-serif",
-                }}
+                tick={chartTickStyle}
                 axisLine={false}
                 tickLine={false}
                 width={35}

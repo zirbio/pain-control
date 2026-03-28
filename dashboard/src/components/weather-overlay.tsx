@@ -14,7 +14,7 @@ import {
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { useEntries } from "@/hooks/use-entries";
-import { accentColors } from "@/lib/design-tokens";
+import { accentColors, chartTickStyle, chartGridProps } from "@/lib/design-tokens";
 
 interface ChartDataPoint {
   date: string;
@@ -138,19 +138,10 @@ export function WeatherOverlay() {
             <stop offset="100%" stopColor={accentColors.info} stopOpacity={0.05} />
           </linearGradient>
         </defs>
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="#44403C"
-          strokeOpacity={0.3}
-          vertical={false}
-        />
+        <CartesianGrid {...chartGridProps} />
         <XAxis
           dataKey="dateLabel"
-          tick={{
-            fill: "#78716C",
-            fontSize: 11,
-            fontFamily: "Satoshi, system-ui, sans-serif",
-          }}
+          tick={chartTickStyle}
           axisLine={{ stroke: "#44403C" }}
           tickLine={false}
           interval="preserveStartEnd"
@@ -159,11 +150,7 @@ export function WeatherOverlay() {
           yAxisId="pain"
           orientation="left"
           domain={[0, 10]}
-          tick={{
-            fill: "#78716C",
-            fontSize: 11,
-            fontFamily: "Satoshi, system-ui, sans-serif",
-          }}
+          tick={chartTickStyle}
           axisLine={false}
           tickLine={false}
           width={30}
@@ -171,18 +158,14 @@ export function WeatherOverlay() {
             value: "Pain",
             angle: -90,
             position: "insideLeft",
-            style: { fill: "#78716C", fontSize: 10, fontFamily: "Satoshi, system-ui, sans-serif" },
+            style: { ...chartTickStyle, fontSize: 10 },
           }}
         />
         <YAxis
           yAxisId="pressure"
           orientation="right"
           domain={[pressureMin, pressureMax]}
-          tick={{
-            fill: "#78716C",
-            fontSize: 11,
-            fontFamily: "Satoshi, system-ui, sans-serif",
-          }}
+          tick={chartTickStyle}
           axisLine={false}
           tickLine={false}
           width={45}
@@ -190,7 +173,7 @@ export function WeatherOverlay() {
             value: "hPa",
             angle: 90,
             position: "insideRight",
-            style: { fill: "#78716C", fontSize: 10, fontFamily: "Satoshi, system-ui, sans-serif" },
+            style: { ...chartTickStyle, fontSize: 10 },
           }}
         />
         <Tooltip

@@ -68,6 +68,7 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
 }
 
 const trendArrows: Record<string, string> = { up: "\u2197", down: "\u2198", stable: "\u2192" };
+const trendColors: Record<string, string> = { down: "#6B8A7A", up: "#C4512A", stable: "#78716C" };
 
 export function MetricCard({
   label,
@@ -92,14 +93,7 @@ export function MetricCard({
         {trend && (
           <span
             className="text-small"
-            style={{
-              color:
-                trend.direction === "down"
-                  ? "#6B8A7A"
-                  : trend.direction === "up"
-                    ? "#C4512A"
-                    : "#78716C",
-            }}
+            style={{ color: trendColors[trend.direction] }}
           >
             {trendArrows[trend.direction]} {trend.delta}
           </span>

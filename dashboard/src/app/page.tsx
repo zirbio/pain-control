@@ -8,11 +8,7 @@ import { WeeklyHeatmap } from "@/components/weekly-heatmap";
 import { NavBar } from "@/components/nav-bar";
 import { AlertsPanel } from "@/components/alerts-panel";
 import { useEntries } from "@/hooks/use-entries";
-
-function average(values: number[]): number | null {
-  if (values.length === 0) return null;
-  return values.reduce((a, b) => a + b, 0) / values.length;
-}
+import { average } from "@/lib/utils";
 
 export default function DashboardPage() {
   const today = new Date();
