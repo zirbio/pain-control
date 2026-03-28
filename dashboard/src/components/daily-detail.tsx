@@ -65,6 +65,27 @@ function SkeletonDetail() {
   );
 }
 
+const PAIN_EFFECT_COLORS: Record<string, string> = {
+  mejoró: "#6B8A7A",
+  empeoró: "#C4512A",
+};
+
+const PAIN_EFFECT_LABELS: Record<string, string> = {
+  mejoró: "Mejora",
+  empeoró: "Empeora",
+};
+
+function PainEffectLabel({ effect }: { effect: string }) {
+  return (
+    <span
+      className="font-body text-small"
+      style={{ color: PAIN_EFFECT_COLORS[effect] ?? "#78716C" }}
+    >
+      {PAIN_EFFECT_LABELS[effect] ?? "Sin cambio"}
+    </span>
+  );
+}
+
 export function DailyDetail({ entry, isLoading }: DailyDetailProps) {
   if (isLoading) {
     return (
@@ -183,7 +204,14 @@ export function DailyDetail({ entry, isLoading }: DailyDetailProps) {
                 </span>
                 {mood.emotions && (
                   <span className="font-body text-small text-text-secondary">
-                    {mood.emotions}
+                    {(() => {
+                      try {
+                        const parsed = JSON.parse(mood.emotions);
+                        return Array.isArray(parsed) ? parsed.join(", ") : mood.emotions;
+                      } catch {
+                        return mood.emotions;
+                      }
+                    })()}
                   </span>
                 )}
               </div>
@@ -214,23 +242,7 @@ export function DailyDetail({ entry, isLoading }: DailyDetailProps) {
                     </span>
                   )}
                   {act.pain_effect && (
-                    <span
-                      className="font-body text-small"
-                      style={{
-                        color:
-                          act.pain_effect === "better"
-                            ? "#6B8A7A"
-                            : act.pain_effect === "worse"
-                              ? "#C4512A"
-                              : "#78716C",
-                      }}
-                    >
-                      {act.pain_effect === "better"
-                        ? "Mejora"
-                        : act.pain_effect === "worse"
-                          ? "Empeora"
-                          : "Sin cambio"}
-                    </span>
+                    <PainEffectLabel effect={act.pain_effect} />
                   )}
                 </div>
               </div>

@@ -1,3 +1,4 @@
+from functools import lru_cache
 from pathlib import Path
 
 from pydantic_settings import BaseSettings
@@ -39,5 +40,6 @@ class Settings(BaseSettings):
             self.DATABASE_URL = f"sqlite:///{Path(self.DATA_DIR) / 'pain-control.db'}"
 
 
+@lru_cache
 def get_settings() -> Settings:
     return Settings()

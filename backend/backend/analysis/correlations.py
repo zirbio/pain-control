@@ -35,18 +35,10 @@ def build_daily_dataframe(
             row["pain_max"] = None
             row["pain_mean"] = None
 
-        if entry.medication_records:
-            effs = [
-                m.effectiveness for m in entry.medication_records if m.effectiveness is not None
-            ]
-            row["medication_effectiveness"] = round(sum(effs) / len(effs), 1) if effs else None
-        else:
-            row["medication_effectiveness"] = None
+        effs = [m.effectiveness for m in entry.medication_records if m.effectiveness is not None]
+        row["medication_effectiveness"] = round(sum(effs) / len(effs), 1) if effs else None
 
-        if entry.mood_records:
-            row["mood_score"] = entry.mood_records[0].score
-        else:
-            row["mood_score"] = None
+        row["mood_score"] = entry.mood_records[0].score if entry.mood_records else None
 
         if entry.activity_records:
             row["activity_minutes"] = sum(a.duration_min or 0 for a in entry.activity_records)
@@ -55,48 +47,26 @@ def build_daily_dataframe(
             row["activity_minutes"] = 0
             row["activity_flag"] = 0
 
-        if entry.stress_records:
-            row["stress_level"] = entry.stress_records[0].level
-        else:
-            row["stress_level"] = None
+        row["stress_level"] = entry.stress_records[0].level if entry.stress_records else None
 
-        if entry.nutrition_records:
-            n = entry.nutrition_records[0]
-            row["alcohol"] = int(n.alcohol) if n.alcohol is not None else None
-            row["caffeine_cups"] = n.caffeine_cups
-            row["water_liters"] = n.water_liters
-        else:
-            row["alcohol"] = None
-            row["caffeine_cups"] = None
-            row["water_liters"] = None
+        n = entry.nutrition_records[0] if entry.nutrition_records else None
+        row["alcohol"] = int(n.alcohol) if n and n.alcohol is not None else None
+        row["caffeine_cups"] = n.caffeine_cups if n else None
+        row["water_liters"] = n.water_liters if n else None
 
-        if entry.weather_records:
-            w = entry.weather_records[0]
-            row["temperature_c"] = w.temperature_c
-            row["humidity_pct"] = w.humidity_pct
-            row["pressure_hpa"] = w.pressure_hpa
-            row["pressure_change_hpa"] = w.pressure_change_hpa
-        else:
-            row["temperature_c"] = None
-            row["humidity_pct"] = None
-            row["pressure_hpa"] = None
-            row["pressure_change_hpa"] = None
+        w = entry.weather_records[0] if entry.weather_records else None
+        row["temperature_c"] = w.temperature_c if w else None
+        row["humidity_pct"] = w.humidity_pct if w else None
+        row["pressure_hpa"] = w.pressure_hpa if w else None
+        row["pressure_change_hpa"] = w.pressure_change_hpa if w else None
 
-        if entry.apple_health_records:
-            ah = entry.apple_health_records[0]
-            row["sleep_hours"] = ah.sleep_hours
-            row["resting_hr"] = ah.resting_hr
-            row["hrv_ms"] = ah.hrv_ms
-            row["steps"] = ah.steps
-            row["active_calories"] = ah.active_calories
-            row["spo2_pct"] = ah.spo2_pct
-        else:
-            row["sleep_hours"] = None
-            row["resting_hr"] = None
-            row["hrv_ms"] = None
-            row["steps"] = None
-            row["active_calories"] = None
-            row["spo2_pct"] = None
+        ah = entry.apple_health_records[0] if entry.apple_health_records else None
+        row["sleep_hours"] = ah.sleep_hours if ah else None
+        row["resting_hr"] = ah.resting_hr if ah else None
+        row["hrv_ms"] = ah.hrv_ms if ah else None
+        row["steps"] = ah.steps if ah else None
+        row["active_calories"] = ah.active_calories if ah else None
+        row["spo2_pct"] = ah.spo2_pct if ah else None
 
         rows.append(row)
 
@@ -160,6 +130,17 @@ def compute_lag_correlation(
             continue
 
         coeff, p_value = stats.spearmanr(temp_df[target], temp_df[variable])
+        if math.isnan(coeff):
+            results.append(
+                {
+                    "lag": lag,
+                    "coefficient": None,
+                    "p_value": None,
+                    "n": len(temp_df),
+                    "significant": False,
+                }
+            )
+            continue
         results.append(
             {
                 "lag": lag,
@@ -183,15 +164,7 @@ def rank_pain_correlations(
     for col in numeric_cols:
         result = compute_pairwise_correlation(df, pain_column, col)
         if result["coefficient"] is not None:
-            rankings.append(
-                {
-                    "variable": col,
-                    "coefficient": result["coefficient"],
-                    "p_value": result["p_value"],
-                    "n": result["n"],
-                    "significant": result["significant"],
-                }
-            )
+            rankings.append({"variable": col, **result})
 
     rankings.sort(key=lambda r: abs(r["coefficient"]), reverse=True)
     return rankings

@@ -11,13 +11,9 @@ from backend.importers.apple_health import AppleHealthImporter
 router = APIRouter(prefix="/api/imports", tags=["imports"])
 
 
-def get_imports_dir() -> str:
-    return get_settings().IMPORTS_DIR
-
-
 @router.post("/apple-health")
 def import_apple_health(db: Session = Depends(get_db)):
-    imports_dir = Path(get_imports_dir())
+    imports_dir = Path(get_settings().IMPORTS_DIR)
     if not imports_dir.exists():
         return {"files_processed": 0, "days_imported": 0, "errors": ["imports directory not found"]}
 
@@ -57,6 +53,7 @@ def import_apple_health(db: Session = Depends(get_db)):
 
             db.commit()
         except Exception as e:
+            db.rollback()
             errors.append(f"{xml_file.name}: {e}")
 
     return {
