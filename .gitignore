@@ -27,6 +27,9 @@ dashboard/node_modules/
 .vscode/
 .idea/
 
+# Claude Code
+.claude/
+
 # Imports (keep dir, ignore data)
 data/imports/*
 !data/imports/.gitkeep
