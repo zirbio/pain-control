@@ -54,6 +54,13 @@ _NUTRITION_IMPORT_FIELDS = [
     "cholesterol_mg",
     "vitamin_d_mcg",
     "vitamin_c_mg",
+    "vitamin_a_mcg",
+    "vitamin_e_mg",
+    "vitamin_k_mcg",
+    "vitamin_b6_mg",
+    "vitamin_b12_mcg",
+    "folate_mcg",
+    "niacin_mg",
 ]
 
 
