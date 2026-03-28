@@ -5,6 +5,8 @@ description: Answer natural language questions about pain patterns by querying t
 
 # Pain Analysis
 
+**Before starting**: Read `personal/medical-context.md` if it exists — it contains the user's actual medication names, pain locations, and field mappings.
+
 Translate the user's question into an API call and present results in natural language.
 
 ## Question patterns
