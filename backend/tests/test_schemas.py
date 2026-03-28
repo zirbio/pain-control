@@ -64,3 +64,19 @@ def test_extra_create():
     extra = ExtraCreate(key="rigidez_matutina", value="7", value_type="integer")
     assert extra.key == "rigidez_matutina"
     assert extra.value_type == "integer"
+
+
+def test_pain_record_boundary_values():
+    """Boundary values 0 and 10 should be accepted."""
+    record_min = PainRecordCreate(location="lumbar", intensity=0)
+    assert record_min.intensity == 0
+    record_max = PainRecordCreate(location="lumbar", intensity=10)
+    assert record_max.intensity == 10
+
+
+def test_mood_score_boundary_values():
+    """Boundary values 1 and 10 should be accepted."""
+    mood_min = MoodRecordCreate(score=1)
+    assert mood_min.score == 1
+    mood_max = MoodRecordCreate(score=10)
+    assert mood_max.score == 10

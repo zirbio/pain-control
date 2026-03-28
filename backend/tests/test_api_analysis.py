@@ -73,3 +73,19 @@ def test_report_endpoint(client_with_data):
     assert "pain" in data
     assert "period" in data
     assert data["period"]["days"] == 30
+
+
+def test_correlation_with_invalid_variable(client_with_data):
+    """Invalid variable names should return error in response."""
+    response = client_with_data.get("/api/analysis/correlation?var_a=nonexistent&var_b=sleep_hours")
+    assert response.status_code == 200
+    data = response.json()
+    assert "error" in data
+
+
+def test_report_with_no_data(client_with_data):
+    """Report for date range with no data should return error."""
+    response = client_with_data.get("/api/analysis/report?start_date=2020-01-01&end_date=2020-01-31")
+    assert response.status_code == 200
+    data = response.json()
+    assert "error" in data

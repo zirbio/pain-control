@@ -105,3 +105,20 @@ def test_schema_field_creation(tmp_path):
     session.commit()
     result = session.query(SchemaField).first()
     assert result.field_name == "rigidez_matutina"
+
+
+def test_cascade_delete_removes_child_records(tmp_path):
+    """Deleting a DailyEntry cascades to all child records."""
+    session = _make_session(tmp_path)
+    entry = DailyEntry(date=datetime.date(2026, 3, 27))
+    entry.pain_records.append(PainRecord(location="lumbar", intensity=5))
+    entry.medication_records.append(MedicationRecord(name="Captor"))
+    session.add(entry)
+    session.commit()
+    entry_id = entry.id
+
+    session.delete(entry)
+    session.commit()
+
+    assert session.query(PainRecord).filter(PainRecord.entry_id == entry_id).count() == 0
+    assert session.query(MedicationRecord).filter(MedicationRecord.entry_id == entry_id).count() == 0
