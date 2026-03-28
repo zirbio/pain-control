@@ -11,9 +11,13 @@ from backend.importers.apple_health import AppleHealthImporter
 router = APIRouter(prefix="/api/imports", tags=["imports"])
 
 
+def get_imports_dir() -> str:
+    return get_settings().IMPORTS_DIR
+
+
 @router.post("/apple-health")
 def import_apple_health(db: Session = Depends(get_db)):
-    imports_dir = Path(get_settings().IMPORTS_DIR)
+    imports_dir = Path(get_imports_dir())
     if not imports_dir.exists():
         return {"files_processed": 0, "days_imported": 0, "errors": ["imports directory not found"]}
 
@@ -35,9 +39,7 @@ def import_apple_health(db: Session = Depends(get_db)):
                     db.add(entry)
                     db.flush()
 
-                db.query(AppleHealthRecord).filter(
-                    AppleHealthRecord.entry_id == entry.id
-                ).delete()
+                db.query(AppleHealthRecord).filter(AppleHealthRecord.entry_id == entry.id).delete()
 
                 record = AppleHealthRecord(
                     entry_id=entry.id,

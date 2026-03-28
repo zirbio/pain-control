@@ -3,7 +3,6 @@ import datetime
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from backend.api.dependencies import get_db
 from backend.analysis.correlations import (
     build_daily_dataframe,
     compute_lag_correlation,
@@ -11,6 +10,7 @@ from backend.analysis.correlations import (
     rank_pain_correlations,
 )
 from backend.analysis.reports import generate_report
+from backend.api.dependencies import get_db
 
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
 

@@ -14,6 +14,8 @@ import {
 import { useLagCorrelation } from "@/hooks/use-analysis";
 import { accentColors } from "@/lib/design-tokens";
 
+const TARGET = "pain_max";
+
 const VARIABLES = [
   "sleep_hours",
   "steps",
@@ -65,10 +67,9 @@ function LagTooltip({ active, payload }: LagTooltipProps) {
 }
 
 export function LagExplorer() {
-  const [target] = useState("pain_max");
   const [variable, setVariable] = useState<string>(VARIABLES[0]);
 
-  const { data: lagData, isLoading, error } = useLagCorrelation(target, variable);
+  const { data: lagData, isLoading, error } = useLagCorrelation(TARGET, variable);
 
   return (
     <div className="flex flex-col h-full">

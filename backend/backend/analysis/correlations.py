@@ -153,9 +153,7 @@ def compute_lag_correlation(
     return results
 
 
-def rank_pain_correlations(
-    df: pd.DataFrame, pain_column: str = "pain_max"
-) -> list[dict]:
+def rank_pain_correlations(df: pd.DataFrame, pain_column: str = "pain_max") -> list[dict]:
     numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
     if pain_column in numeric_cols:
         numeric_cols.remove(pain_column)

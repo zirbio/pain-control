@@ -8,7 +8,6 @@ from backend.api.dependencies import get_db
 from backend.api.schemas import DailyEntryCreate, DailyEntryResponse
 from backend.db.models import (
     ActivityRecord,
-    AppleHealthRecord,
     DailyEntry,
     Extra,
     MedicationRecord,
@@ -16,7 +15,6 @@ from backend.db.models import (
     NutritionRecord,
     PainRecord,
     StressRecord,
-    WeatherRecord,
 )
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
@@ -24,12 +22,8 @@ router = APIRouter(prefix="/api/entries", tags=["entries"])
 
 def _populate_entry(entry: DailyEntry, data: DailyEntryCreate) -> None:
     """Populate a DailyEntry with records from the create schema."""
-    entry.pain_records = [
-        PainRecord(**r.model_dump()) for r in data.pain_records
-    ]
-    entry.medication_records = [
-        MedicationRecord(**r.model_dump()) for r in data.medication_records
-    ]
+    entry.pain_records = [PainRecord(**r.model_dump()) for r in data.pain_records]
+    entry.medication_records = [MedicationRecord(**r.model_dump()) for r in data.medication_records]
     entry.mood_records = [
         MoodRecord(
             score=r.score,
@@ -38,12 +32,8 @@ def _populate_entry(entry: DailyEntry, data: DailyEntryCreate) -> None:
         )
         for r in data.mood_records
     ]
-    entry.activity_records = [
-        ActivityRecord(**r.model_dump()) for r in data.activity_records
-    ]
-    entry.stress_records = [
-        StressRecord(**r.model_dump()) for r in data.stress_records
-    ]
+    entry.activity_records = [ActivityRecord(**r.model_dump()) for r in data.activity_records]
+    entry.stress_records = [StressRecord(**r.model_dump()) for r in data.stress_records]
     entry.nutrition_records = [
         NutritionRecord(
             meals=json.dumps(r.meals) if r.meals else None,

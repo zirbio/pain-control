@@ -2,8 +2,8 @@ import datetime
 
 from pydantic import BaseModel, Field
 
-
 # --- Create schemas (input) ---
+
 
 class PainRecordCreate(BaseModel):
     location: str
@@ -65,6 +65,7 @@ class DailyEntryCreate(BaseModel):
 
 
 # --- Response schemas (output) ---
+
 
 class PainRecordResponse(BaseModel):
     id: int

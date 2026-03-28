@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useRankings } from "@/hooks/use-analysis";
 import { accentColors } from "@/lib/design-tokens";
 
@@ -21,6 +22,11 @@ function SignificanceBadge({ significant }: { significant: boolean }) {
 
 export function CorrelationMatrix() {
   const { data: rankings, isLoading, error } = useRankings();
+
+  const sorted = useMemo(
+    () => [...(rankings ?? [])].sort((a, b) => Math.abs(b.coefficient) - Math.abs(a.coefficient)),
+    [rankings],
+  );
 
   if (isLoading) {
     return (
@@ -51,10 +57,6 @@ export function CorrelationMatrix() {
       </div>
     );
   }
-
-  const sorted = [...rankings].sort(
-    (a, b) => Math.abs(b.coefficient) - Math.abs(a.coefficient),
-  );
 
   return (
     <div className="overflow-x-auto">

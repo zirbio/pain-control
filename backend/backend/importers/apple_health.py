@@ -91,19 +91,21 @@ class AppleHealthImporter:
 
         results: dict[datetime.date, DailyHealthData] = {}
         for date in sorted(all_dates):
-            data = DailyHealthData(date=date)
-            if date in daily_steps:
-                data.steps = daily_steps[date]
-            if date in daily_calories:
-                data.active_calories = daily_calories[date]
-            if date in daily_resting_hr:
-                data.resting_hr = int(sum(daily_resting_hr[date]) / len(daily_resting_hr[date]))
-            if date in daily_hrv:
-                data.hrv_ms = round(sum(daily_hrv[date]) / len(daily_hrv[date]), 1)
-            if date in daily_spo2:
-                data.spo2_pct = round(sum(daily_spo2[date]) / len(daily_spo2[date]), 1)
-            if date in daily_sleep_minutes:
-                data.sleep_hours = round(daily_sleep_minutes[date] / 60, 1)
-            results[date] = data
+            hr_readings = daily_resting_hr.get(date, [])
+            hrv_readings = daily_hrv.get(date, [])
+            spo2_readings = daily_spo2.get(date, [])
+            results[date] = DailyHealthData(
+                date=date,
+                steps=daily_steps.get(date) or None,
+                active_calories=daily_calories.get(date) or None,
+                resting_hr=int(sum(hr_readings) / len(hr_readings)) if hr_readings else None,
+                hrv_ms=round(sum(hrv_readings) / len(hrv_readings), 1) if hrv_readings else None,
+                spo2_pct=round(sum(spo2_readings) / len(spo2_readings), 1)
+                if spo2_readings
+                else None,
+                sleep_hours=round(daily_sleep_minutes[date] / 60, 1)
+                if date in daily_sleep_minutes
+                else None,
+            )
 
         return results

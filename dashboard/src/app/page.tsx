@@ -9,6 +9,11 @@ import { NavBar } from "@/components/nav-bar";
 import { AlertsPanel } from "@/components/alerts-panel";
 import { useEntries } from "@/hooks/use-entries";
 
+function average(values: number[]): number | null {
+  if (values.length === 0) return null;
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
 export default function DashboardPage() {
   const today = new Date();
   const startDate = format(subDays(today, 7), "yyyy-MM-dd");
@@ -25,40 +30,27 @@ export default function DashboardPage() {
   });
 
   const painValues = entries
-    ?.map((e) => {
-      const max = Math.max(...e.pain_records.map((p) => p.intensity), 0);
-      return max;
-    })
+    ?.map((e) => (e.pain_records.length > 0 ? Math.max(...e.pain_records.map((p) => p.intensity)) : 0))
     .reverse();
 
-  const avgPain =
-    painValues && painValues.length > 0
-      ? painValues.reduce((a, b) => a + b, 0) / painValues.length
-      : null;
+  const avgPain = average(painValues ?? []);
 
   const sleepValues = entries
     ?.map((e) => e.apple_health_records[0]?.sleep_hours ?? null)
     .filter((v): v is number => v !== null)
     .reverse();
 
-  const avgSleep =
-    sleepValues && sleepValues.length > 0
-      ? sleepValues.reduce((a, b) => a + b, 0) / sleepValues.length
-      : null;
+  const avgSleep = average(sleepValues ?? []);
 
-  const activeDays =
-    entries?.filter((e) => e.activity_records.length > 0).length ?? 0;
+  const activeDays = entries?.filter((e) => e.activity_records.length > 0).length ?? 0;
   const totalDays = entries?.length ?? 0;
 
   const medEffValues = entries
     ?.flatMap((e) => e.medication_records)
     .map((m) => m.effectiveness)
-    .filter((v): v is number => v !== null);
+    .filter((v): v is number => v !== null) ?? [];
 
-  const avgMedEff =
-    medEffValues && medEffValues.length > 0
-      ? medEffValues.reduce((a, b) => a + b, 0) / medEffValues.length
-      : null;
+  const avgMedEff = average(medEffValues);
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">

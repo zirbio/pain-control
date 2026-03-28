@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routers import entries, imports, analysis
+from backend.api.routers import analysis, entries, imports
 from backend.core.config import get_settings
 
 settings = get_settings()

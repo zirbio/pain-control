@@ -28,15 +28,33 @@ class DailyEntry(Base):
         DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    pain_records: Mapped[list["PainRecord"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
-    medication_records: Mapped[list["MedicationRecord"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
-    mood_records: Mapped[list["MoodRecord"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
-    activity_records: Mapped[list["ActivityRecord"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
-    stress_records: Mapped[list["StressRecord"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
-    nutrition_records: Mapped[list["NutritionRecord"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
-    weather_records: Mapped[list["WeatherRecord"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
-    apple_health_records: Mapped[list["AppleHealthRecord"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
-    extras: Mapped[list["Extra"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
+    pain_records: Mapped[list["PainRecord"]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan"
+    )
+    medication_records: Mapped[list["MedicationRecord"]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan"
+    )
+    mood_records: Mapped[list["MoodRecord"]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan"
+    )
+    activity_records: Mapped[list["ActivityRecord"]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan"
+    )
+    stress_records: Mapped[list["StressRecord"]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan"
+    )
+    nutrition_records: Mapped[list["NutritionRecord"]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan"
+    )
+    weather_records: Mapped[list["WeatherRecord"]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan"
+    )
+    apple_health_records: Mapped[list["AppleHealthRecord"]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan"
+    )
+    extras: Mapped[list["Extra"]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan"
+    )
 
 
 class PainRecord(Base):
