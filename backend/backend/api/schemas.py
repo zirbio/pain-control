@@ -148,6 +148,23 @@ class AppleHealthRecordResponse(BaseModel):
     steps: int | None
     active_calories: int | None
     spo2_pct: float | None
+    sleep_rem_hours: float | None = None
+    distance_km: float | None = None
+    flights_climbed: int | None = None
+    resting_energy_kj: float | None = None
+    exercise_intensity: float | None = None
+    walking_hr_avg: int | None = None
+    vo2_max: float | None = None
+    cardio_recovery: float | None = None
+    step_length_cm: float | None = None
+    walking_asymmetry_pct: float | None = None
+    double_support_pct: float | None = None
+    walking_speed_kmh: float | None = None
+    respiratory_rate: float | None = None
+    breathing_disturbances: float | None = None
+    weight_kg: float | None = None
+    body_fat_pct: float | None = None
+    daylight_min: float | None = None
 
     model_config = {"from_attributes": True}
 
@@ -158,6 +175,54 @@ class ExtraResponse(BaseModel):
     value: str
     value_type: str
     first_seen: datetime.date | None
+
+    model_config = {"from_attributes": True}
+
+
+class NutritionImportRecordResponse(BaseModel):
+    id: int
+    source: str
+    calories_kj: float | None = None
+    protein_g: float | None = None
+    carbs_g: float | None = None
+    fat_total_g: float | None = None
+    fat_saturated_g: float | None = None
+    fiber_g: float | None = None
+    sugar_g: float | None = None
+    water_ml: float | None = None
+    caffeine_mg: float | None = None
+    sodium_mg: float | None = None
+    potassium_mg: float | None = None
+    magnesium_mg: float | None = None
+    calcium_mg: float | None = None
+    iron_mg: float | None = None
+    zinc_mg: float | None = None
+    cholesterol_mg: float | None = None
+    vitamin_a_mcg: float | None = None
+    vitamin_c_mg: float | None = None
+    vitamin_d_mcg: float | None = None
+    vitamin_e_mg: float | None = None
+    vitamin_k_mcg: float | None = None
+    vitamin_b6_mg: float | None = None
+    vitamin_b12_mcg: float | None = None
+    folate_mcg: float | None = None
+    niacin_mg: float | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class WorkoutRecordResponse(BaseModel):
+    id: int
+    workout_type: str
+    start_time: datetime.datetime | None = None
+    end_time: datetime.datetime | None = None
+    duration_min: float | None = None
+    active_energy_kj: float | None = None
+    intensity: float | None = None
+    max_hr: int | None = None
+    avg_hr: int | None = None
+    distance_km: float | None = None
+    steps: int | None = None
 
     model_config = {"from_attributes": True}
 
@@ -175,6 +240,8 @@ class DailyEntryResponse(BaseModel):
     nutrition_records: list[NutritionRecordResponse]
     weather_records: list[WeatherRecordResponse]
     apple_health_records: list[AppleHealthRecordResponse]
+    nutrition_import_records: list[NutritionImportRecordResponse] = []
+    workout_records: list[WorkoutRecordResponse] = []
     extras: list[ExtraResponse]
 
     model_config = {"from_attributes": True}

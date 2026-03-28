@@ -17,10 +17,12 @@ from backend.db.models import (
     DailyEntry,
     MedicationRecord,
     MoodRecord,
+    NutritionImportRecord,
     NutritionRecord,
     PainRecord,
     StressRecord,
     WeatherRecord,
+    WorkoutRecord,
 )
 
 
@@ -105,7 +107,44 @@ def test_build_daily_dataframe_all_record_types(tmp_path):
         )
     )
     entry.apple_health_records.append(
-        AppleHealthRecord(sleep_hours=6.5, resting_hr=62, hrv_ms=38.5, steps=8432)
+        AppleHealthRecord(
+            sleep_hours=6.5,
+            resting_hr=62,
+            hrv_ms=38.5,
+            steps=8432,
+            walking_asymmetry_pct=12.5,
+            vo2_max=42.0,
+            distance_km=5.3,
+        )
+    )
+    entry.nutrition_import_records.append(
+        NutritionImportRecord(
+            source="apple_health",
+            protein_g=120.5,
+            carbs_g=200.0,
+            caffeine_mg=400.0,
+            vitamin_d_mcg=2.5,
+        )
+    )
+    entry.workout_records.append(
+        WorkoutRecord(
+            workout_type="Pilates",
+            duration_min=58.0,
+            active_energy_kj=1200.0,
+            intensity=5.2,
+            max_hr=141,
+            avg_hr=110,
+        )
+    )
+    entry.workout_records.append(
+        WorkoutRecord(
+            workout_type="Ciclismo",
+            duration_min=40.0,
+            active_energy_kj=950.0,
+            intensity=6.9,
+            max_hr=172,
+            avg_hr=135,
+        )
     )
     session.add(entry)
     session.commit()
@@ -134,11 +173,26 @@ def test_build_daily_dataframe_all_record_types(tmp_path):
     assert df["humidity_pct"].iloc[0] == 78
     assert df["pressure_hpa"].iloc[0] == 1008.3
     assert df["pressure_change_hpa"].iloc[0] == -5.2
-    # Apple Health
+    # Apple Health (original + new)
     assert df["sleep_hours"].iloc[0] == 6.5
     assert df["resting_hr"].iloc[0] == 62
     assert df["hrv_ms"].iloc[0] == 38.5
     assert df["steps"].iloc[0] == 8432
+    assert df["walking_asymmetry_pct"].iloc[0] == 12.5
+    assert df["vo2_max"].iloc[0] == 42.0
+    assert df["distance_km"].iloc[0] == 5.3
+    # Nutrition Import
+    assert df["protein_g"].iloc[0] == 120.5
+    assert df["carbs_g"].iloc[0] == 200.0
+    assert df["caffeine_mg"].iloc[0] == 400.0
+    assert df["vitamin_d_mcg"].iloc[0] == 2.5
+    # Workout aggregation (2 workouts)
+    assert df["workout_count"].iloc[0] == 2
+    assert df["workout_total_min"].iloc[0] == 98.0  # 58 + 40
+    assert df["workout_total_energy_kj"].iloc[0] == 2150.0  # 1200 + 950
+    assert df["workout_max_hr"].iloc[0] == 172  # max(141, 172)
+    assert df["workout_avg_hr"].iloc[0] == 122  # round((110+135)/2)
+    assert abs(df["workout_max_intensity"].iloc[0] - 6.9) < 0.01
 
 
 def test_build_daily_dataframe_empty_pain_records(tmp_path):

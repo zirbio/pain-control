@@ -1,7 +1,9 @@
 import datetime
 from pathlib import Path
 
-from backend.importers.apple_health import AppleHealthImporter, DailyHealthData
+import pytest
+
+from backend.importers.apple_health import AppleHealthImporter, DailyHealthData, DailyImportData
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -35,3 +37,195 @@ def test_parse_xml_empty_file(tmp_path):
     importer = AppleHealthImporter()
     results = importer.parse_xml(xml_file)
     assert len(results) == 0
+
+
+def test_parse_csv_extracts_daily_data(tmp_path):
+    csv_file = tmp_path / "HealthAutoExport-2026-03-21-2026-03-21.csv"
+    csv_file.write_text(
+        "Fecha/Hora,Conteo de Pasos (pasos),Energía Activa (kJ),"
+        "Frecuencia Cardiaca en Reposo (bpm),"
+        "Variabilidad de Frecuencia Cardíaca (ms),"
+        "Saturación de Oxígeno en Sangre (%),"
+        "Análisis del Sueño [Total] (hr)\n"
+        "2026-03-21 00:00:00,7035,1994,54,49.23,98.86,6.4\n"
+        "2026-03-22 00:00:00,9543,2828,63,57.01,97.8,6.7\n"
+    )
+    importer = AppleHealthImporter()
+    results = importer.parse_csv(csv_file)
+
+    assert len(results) == 2
+
+    import_data1 = results[datetime.date(2026, 3, 21)]
+    assert isinstance(import_data1, DailyImportData)
+    day1 = import_data1.health
+    assert day1.steps == 7035
+    assert day1.active_calories == 476  # 1994 kJ / 4.184
+    assert day1.resting_hr == 54
+    assert abs(day1.hrv_ms - 49.2) < 0.1
+    assert abs(day1.spo2_pct - 98.9) < 0.1
+    assert abs(day1.sleep_hours - 6.4) < 0.1
+
+    day2 = results[datetime.date(2026, 3, 22)].health
+    assert day2.steps == 9543
+    assert day2.resting_hr == 63
+
+
+def test_parse_csv_handles_empty_values(tmp_path):
+    csv_file = tmp_path / "HealthAutoExport-empty.csv"
+    csv_file.write_text(
+        "Fecha/Hora,Conteo de Pasos (pasos),Energía Activa (kJ),"
+        "Frecuencia Cardiaca en Reposo (bpm),"
+        "Variabilidad de Frecuencia Cardíaca (ms),"
+        "Saturación de Oxígeno en Sangre (%),"
+        "Análisis del Sueño [Total] (hr)\n"
+        "2026-03-21 00:00:00,,,,,, \n"
+    )
+    importer = AppleHealthImporter()
+    results = importer.parse_csv(csv_file)
+
+    day = results[datetime.date(2026, 3, 21)].health
+    assert day.steps is None
+    assert day.resting_hr is None
+    assert day.sleep_hours is None
+
+
+def test_parse_csv_extracts_extended_health_and_nutrition(tmp_path):
+    csv_file = tmp_path / "HealthAutoExport-full.csv"
+    csv_file.write_text(
+        "Fecha/Hora,Conteo de Pasos (pasos),Energía Activa (kJ),"
+        "Frecuencia Cardiaca en Reposo (bpm),"
+        "Variabilidad de Frecuencia Cardíaca (ms),"
+        "Saturación de Oxígeno en Sangre (%),"
+        "Análisis del Sueño [Total] (hr),"
+        "Análisis del Sueño [REM] (hr),"
+        "Distancia de Caminata + Carrera (km),"
+        "Porcentaje de Asimetría al Caminar (%),"
+        "Velocidad al Caminar (km/hr),"
+        "VO2 Máx (ml/(kg·min)),"
+        "Proteína (g),"
+        "Carbohidratos (g),"
+        "Cafeína (mg),"
+        "Vitamina D (mcg)\n"
+        "2026-03-21 00:00:00,7035,1994,54,49.23,98.86,6.4,"
+        "1.79,5.23,27.11,3.47,42.5,"
+        "148.76,198.05,1184,1.77\n"
+    )
+    importer = AppleHealthImporter()
+    results = importer.parse_csv(csv_file)
+
+    data = results[datetime.date(2026, 3, 21)]
+    h = data.health
+    assert abs(h.sleep_rem_hours - 1.8) < 0.1
+    assert abs(h.distance_km - 5.23) < 0.01
+    assert abs(h.walking_asymmetry_pct - 27.11) < 0.01
+    assert abs(h.walking_speed_kmh - 3.47) < 0.01
+    assert abs(h.vo2_max - 42.5) < 0.1
+
+    n = data.nutrition
+    assert n is not None
+    assert abs(n.protein_g - 148.76) < 0.01
+    assert abs(n.carbs_g - 198.05) < 0.01
+    assert abs(n.caffeine_mg - 1184) < 0.1
+    assert abs(n.vitamin_d_mcg - 1.77) < 0.01
+
+
+def test_parse_workouts_csv(tmp_path):
+    csv_file = tmp_path / "Workouts-test.csv"
+    csv_file.write_text(
+        "Workout Type,Start,End,Duration,"
+        "Energía Activa (kJ),Energía en Reposo (kJ),"
+        "Intensidad (kcal/hr·kg),"
+        "Frecuencia Cardíaca Máxima (bpm),"
+        "Frecuencia Cardíaca Promedio (bpm),"
+        "Distancia (km),"
+        "Velocidad Máx. (km/hr),Veloc. Prom. (km/hr),"
+        "Pisos Subidos,Elevación Ascendida (m),"
+        "Elevación Descendida (m),Conteo de Pasos,"
+        "Cadencia de Paso (spm)\n"
+        "Pilates,2026-03-23 09:04,2026-03-23 10:03,00:58:41,"
+        "1201.17,396.73,5.24,141,110,0.0,0.0,0.0,0,0,0,116,1.97\n"
+        "Interior Ciclismo,2026-03-22 09:19,2026-03-22 09:59,00:40:02,"
+        "953.95,201.81,0.0,158,134,9.70,0.0,0.0,0,0,0,12,0.30\n"
+    )
+    importer = AppleHealthImporter()
+    workouts = importer.parse_workouts_csv(csv_file)
+
+    assert len(workouts) == 2
+
+    pilates = workouts[0]
+    assert pilates.workout_type == "Pilates"
+    assert pilates.date == datetime.date(2026, 3, 23)
+    assert abs(pilates.duration_min - 58.7) < 0.1
+    assert pilates.max_hr == 141
+    assert pilates.avg_hr == 110
+    assert abs(pilates.active_energy_kj - 1201.17) < 0.01
+
+    ciclismo = workouts[1]
+    assert ciclismo.workout_type == "Interior Ciclismo"
+    assert ciclismo.date == datetime.date(2026, 3, 22)
+    assert abs(ciclismo.distance_km - 9.70) < 0.01
+    assert ciclismo.max_hr == 158
+
+
+def test_parse_csv_with_real_data():
+    """Integration test with real exported data."""
+    csv_path = (
+        Path(__file__).parent.parent.parent
+        / "data"
+        / "imports"
+        / "HealthAutoExport-2026-03-21-2026-03-28.csv"
+    )
+    if not csv_path.exists():
+        pytest.skip("real data file not available")
+
+    importer = AppleHealthImporter()
+    results = importer.parse_csv(csv_path)
+    assert len(results) == 8
+
+    day = results[datetime.date(2026, 3, 26)]
+    h = day.health
+    assert h.steps == 11357
+    assert h.walking_asymmetry_pct is not None
+    assert h.vo2_max is not None
+
+    n = day.nutrition
+    assert n is not None
+    assert n.protein_g is not None
+    assert n.protein_g > 0
+
+
+def test_parse_workouts_csv_duration_two_parts(tmp_path):
+    """Gap A: Duration in MM:SS format (2 parts)."""
+    csv_file = tmp_path / "Workouts-mmss.csv"
+    csv_file.write_text(
+        "Workout Type,Start,End,Duration,Energía Activa (kJ)\n"
+        "Walking,2026-03-21 08:00,2026-03-21 08:45,45:00,500\n"
+        "Running,2026-03-21 10:00,2026-03-21 10:30,,600\n"
+    )
+    importer = AppleHealthImporter()
+    workouts = importer.parse_workouts_csv(csv_file)
+    assert len(workouts) == 2
+    assert abs(workouts[0].duration_min - 45.0) < 0.1
+    assert workouts[1].duration_min is None
+
+
+def test_parse_workouts_csv_empty_file(tmp_path):
+    """Gap G: Workouts CSV with headers only."""
+    csv_file = tmp_path / "Workouts-empty.csv"
+    csv_file.write_text("Workout Type,Start,End,Duration,Energía Activa (kJ)\n")
+    importer = AppleHealthImporter()
+    workouts = importer.parse_workouts_csv(csv_file)
+    assert workouts == []
+
+
+def test_parse_csv_no_nutrition_columns(tmp_path):
+    """Gap F: CSV with only health columns, no nutrition headers."""
+    csv_file = tmp_path / "HealthAutoExport-health-only.csv"
+    csv_file.write_text(
+        "Fecha/Hora,Conteo de Pasos (pasos),Energía Activa (kJ)\n2026-03-21 00:00:00,5000,1000\n"
+    )
+    importer = AppleHealthImporter()
+    results = importer.parse_csv(csv_file)
+    data = results[datetime.date(2026, 3, 21)]
+    assert data.health.steps == 5000
+    assert data.nutrition is None
