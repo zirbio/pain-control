@@ -24,8 +24,8 @@ def fetch_and_save_weather(
     settings = get_settings()
 
     # Resolve location: city name → geocode, or use params, or use defaults
-    resolved_lat = lat or settings.WEATHER_LAT
-    resolved_lon = lon or settings.WEATHER_LON
+    resolved_lat = lat if lat is not None else settings.WEATHER_LAT
+    resolved_lon = lon if lon is not None else settings.WEATHER_LON
     resolved_location = location or settings.WEATHER_LOCATION
 
     if city:

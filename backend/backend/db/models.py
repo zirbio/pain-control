@@ -61,7 +61,9 @@ class PainRecord(Base):
     __tablename__ = "pain_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(ForeignKey("daily_entries.id"), nullable=False)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_entries.id"), nullable=False, index=True
+    )
     location: Mapped[str] = mapped_column(String(50), nullable=False)
     intensity: Mapped[int] = mapped_column(Integer, nullable=False)
     pattern: Mapped[str | None] = mapped_column(String(50))
@@ -75,7 +77,9 @@ class MedicationRecord(Base):
     __tablename__ = "medication_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(ForeignKey("daily_entries.id"), nullable=False)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_entries.id"), nullable=False, index=True
+    )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     dose: Mapped[str | None] = mapped_column(String(100))
     time_taken: Mapped[str | None] = mapped_column(String(10))
@@ -88,7 +92,9 @@ class MoodRecord(Base):
     __tablename__ = "mood_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(ForeignKey("daily_entries.id"), nullable=False)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_entries.id"), nullable=False, index=True
+    )
     score: Mapped[int] = mapped_column(Integer, nullable=False)
     emotions: Mapped[str | None] = mapped_column(Text)  # JSON string
     notes: Mapped[str | None] = mapped_column(Text)
@@ -100,7 +106,9 @@ class ActivityRecord(Base):
     __tablename__ = "activity_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(ForeignKey("daily_entries.id"), nullable=False)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_entries.id"), nullable=False, index=True
+    )
     type: Mapped[str] = mapped_column(String(50), nullable=False)
     duration_min: Mapped[int | None] = mapped_column(Integer)
     pain_effect: Mapped[str | None] = mapped_column(String(20))
@@ -113,7 +121,9 @@ class StressRecord(Base):
     __tablename__ = "stress_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(ForeignKey("daily_entries.id"), nullable=False)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_entries.id"), nullable=False, index=True
+    )
     level: Mapped[int] = mapped_column(Integer, nullable=False)
     source: Mapped[str | None] = mapped_column(String(50))
     notes: Mapped[str | None] = mapped_column(Text)
@@ -125,7 +135,9 @@ class NutritionRecord(Base):
     __tablename__ = "nutrition_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(ForeignKey("daily_entries.id"), nullable=False)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_entries.id"), nullable=False, index=True
+    )
     meals: Mapped[str | None] = mapped_column(Text)  # JSON string
     alcohol: Mapped[bool | None] = mapped_column(Boolean)
     caffeine_cups: Mapped[int | None] = mapped_column(Integer)
@@ -139,7 +151,9 @@ class WeatherRecord(Base):
     __tablename__ = "weather_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(ForeignKey("daily_entries.id"), nullable=False)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_entries.id"), nullable=False, index=True
+    )
     temperature_c: Mapped[float | None] = mapped_column(Float)
     humidity_pct: Mapped[float | None] = mapped_column(Float)
     pressure_hpa: Mapped[float | None] = mapped_column(Float)
@@ -154,7 +168,9 @@ class AppleHealthRecord(Base):
     __tablename__ = "apple_health_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(ForeignKey("daily_entries.id"), nullable=False)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_entries.id"), nullable=False, index=True
+    )
     sleep_hours: Mapped[float | None] = mapped_column(Float)
     sleep_quality: Mapped[str | None] = mapped_column(Text)
     resting_hr: Mapped[int | None] = mapped_column(Integer)
@@ -171,7 +187,9 @@ class Extra(Base):
     __tablename__ = "extras"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(ForeignKey("daily_entries.id"), nullable=False)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_entries.id"), nullable=False, index=True
+    )
     key: Mapped[str] = mapped_column(String(100), nullable=False)
     value: Mapped[str] = mapped_column(Text, nullable=False)
     value_type: Mapped[str] = mapped_column(String(20), nullable=False, default="text")

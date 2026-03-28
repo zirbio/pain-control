@@ -7,7 +7,7 @@ interface AlertCardProps {
   type?: "correlation" | "trend" | "pattern";
 }
 
-export function AlertCard({ title, body, metadata, type = "correlation" }: AlertCardProps) {
+export function AlertCard({ title, body, metadata }: AlertCardProps) {
   return (
     <div className="bg-bg-surface border border-bg-tertiary rounded-card p-4 border-l-[3px] border-l-accent-warning transition-all duration-200 hover:border-l-[5px]">
       <div className="flex items-center gap-2 mb-2">

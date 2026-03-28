@@ -3,10 +3,7 @@
 import { useMemo } from "react";
 import { useRankings } from "@/hooks/use-analysis";
 import { accentColors } from "@/lib/design-tokens";
-
-function formatVariable(name: string): string {
-  return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
+import { formatVariable } from "@/lib/utils";
 
 function SignificanceBadge({ significant }: { significant: boolean }) {
   if (!significant) return null;
