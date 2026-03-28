@@ -27,6 +27,11 @@ dashboard/node_modules/
 .vscode/
 .idea/
 
+# Caches
+.ruff_cache/
+.pytest_cache/
+*.tsbuildinfo
+
 # Claude Code
 .claude/
 

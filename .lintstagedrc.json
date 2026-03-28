@@ -1,0 +1,9 @@
+{
+  "backend/**/*.py": [
+    "bash -c 'cd backend && ruff check --fix'",
+    "bash -c 'cd backend && ruff format'"
+  ],
+  "dashboard/**/*.{ts,tsx,js,jsx}": [
+    "bash -c 'cd dashboard && npx eslint --fix'"
+  ]
+}
