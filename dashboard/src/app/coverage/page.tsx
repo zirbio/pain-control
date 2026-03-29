@@ -52,12 +52,10 @@ export default function CoveragePage() {
     };
   }, [entries, days, offset]);
 
-  function getBarColor(percentage: number): string {
-    if (percentage > 70) return accentColors.positive;
-    if (percentage >= 40) return accentColors.warning;
-    return accentColors.negative;
-  }
-  const barColor = getBarColor(pct);
+  const barColor =
+    pct > 70 ? accentColors.positive :
+    pct >= 40 ? accentColors.warning :
+    accentColors.negative;
 
   return (
     <>

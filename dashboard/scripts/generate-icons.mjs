@@ -6,17 +6,20 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const publicDir = resolve(__dirname, "../public");
 
+// Brand constants — single source of truth for the ensō mark
+const BG = "#1c1917";
+const ACCENT = "#D4A03A";
+const ENSO_PATH = "M 30 6 C 14 8, 4 18, 6 32 C 8 46, 18 58, 32 58 C 46 58, 56 46, 58 32 C 60 18, 50 8, 40 6";
+const SPLATTER = `<circle cx="30" cy="6" r="2.5" fill="${ACCENT}" opacity="0.6"/>`;
+
 // The ensō mark SVG at different stroke widths for different sizes.
 // Stroke gets thicker at smaller sizes to maintain visual weight.
 function markSvg(size, strokeWidth, showSplatter = true) {
-  const splatter = showSplatter
-    ? `<circle cx="30" cy="6" r="2.5" fill="#D4A03A" opacity="0.6"/>`
-    : "";
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" fill="#1c1917"/>
-  <path d="M 30 6 C 14 8, 4 18, 6 32 C 8 46, 18 58, 32 58 C 46 58, 56 46, 58 32 C 60 18, 50 8, 40 6"
-    stroke="#D4A03A" stroke-width="${strokeWidth}" stroke-linecap="round" fill="none"/>
-  ${splatter}
+  <rect width="64" height="64" fill="${BG}"/>
+  <path d="${ENSO_PATH}"
+    stroke="${ACCENT}" stroke-width="${strokeWidth}" stroke-linecap="round" fill="none"/>
+  ${showSplatter ? SPLATTER : ""}
 </svg>`);
 }
 
@@ -25,11 +28,11 @@ function maskableSvg(size) {
   const padding = Math.round(size * 0.2);
   const innerSize = size - padding * 2;
   return Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" fill="none">
-  <rect width="${size}" height="${size}" fill="#1c1917"/>
+  <rect width="${size}" height="${size}" fill="${BG}"/>
   <svg x="${padding}" y="${padding}" width="${innerSize}" height="${innerSize}" viewBox="0 0 64 64">
-    <path d="M 30 6 C 14 8, 4 18, 6 32 C 8 46, 18 58, 32 58 C 46 58, 56 46, 58 32 C 60 18, 50 8, 40 6"
-      stroke="#D4A03A" stroke-width="3.5" stroke-linecap="round" fill="none"/>
-    <circle cx="30" cy="6" r="2.5" fill="#D4A03A" opacity="0.6"/>
+    <path d="${ENSO_PATH}"
+      stroke="${ACCENT}" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    ${SPLATTER}
   </svg>
 </svg>`);
 }
@@ -78,22 +81,22 @@ console.log("✓ favicon.ico (16×16 ICO wrapping PNG)");
 
 // OG Image: 1200×630
 const ogSvg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
-  <rect width="1200" height="630" fill="#1c1917"/>
+  <rect width="1200" height="630" fill="${BG}"/>
   <defs>
     <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
       <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#292524" stroke-width="1"/>
     </pattern>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#D4A03A" stop-opacity="0"/>
-      <stop offset="50%" stop-color="#D4A03A" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#D4A03A" stop-opacity="0"/>
+      <stop offset="0%" stop-color="${ACCENT}" stop-opacity="0"/>
+      <stop offset="50%" stop-color="${ACCENT}" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="${ACCENT}" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#grid)" opacity="0.15"/>
   <g transform="translate(480, 235)">
-    <path d="M 30 6 C 14 8, 4 18, 6 32 C 8 46, 18 58, 32 58 C 46 58, 56 46, 58 32 C 60 18, 50 8, 40 6"
-      stroke="#D4A03A" stroke-width="3.5" stroke-linecap="round" fill="none"/>
-    <circle cx="30" cy="6" r="2.5" fill="#D4A03A" opacity="0.6"/>
+    <path d="${ENSO_PATH}"
+      stroke="${ACCENT}" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+    ${SPLATTER}
   </g>
   <text x="552" y="290" fill="#F5F5F4" font-family="Georgia, serif" font-size="36" font-weight="500" letter-spacing="0.5">Pain Control</text>
   <text x="552" y="318" fill="#A8A29E" font-family="system-ui, sans-serif" font-size="12" font-weight="400" letter-spacing="4">CHRONIC PAIN OBSERVATORY</text>
