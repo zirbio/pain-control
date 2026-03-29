@@ -117,8 +117,8 @@ def build_daily_dataframe(
 
         n = entry.nutrition_records[0] if entry.nutrition_records else None
         row["alcohol"] = int(n.alcohol) if n and n.alcohol is not None else None
-        row["caffeine_cups"] = getattr(n, "caffeine_cups", None)
-        row["water_liters"] = getattr(n, "water_liters", None)
+        row["caffeine_cups"] = n.caffeine_cups if n else None
+        row["water_liters"] = n.water_liters if n else None
 
         w = entry.weather_records[0] if entry.weather_records else None
         for field in ("temperature_c", "humidity_pct", "pressure_hpa", "pressure_change_hpa"):

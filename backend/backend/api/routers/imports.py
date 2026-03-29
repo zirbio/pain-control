@@ -22,7 +22,7 @@ from backend.importers.apple_health import (
 router = APIRouter(prefix="/api/imports", tags=["imports"])
 
 # Fields from dataclasses that don't map to ORM columns
-_HEALTH_EXCLUDE = {"date", "sleep_quality"}
+_HEALTH_EXCLUDE = {"date", "sleep_quality", "raw_data"}
 _NUTRITION_EXCLUDE = {"date"}
 _WORKOUT_EXCLUDE = {"date"}
 
