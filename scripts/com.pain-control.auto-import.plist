@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.pain-control.auto-import</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/silvio_requena/Code/pain-control/scripts/health-auto-import.sh</string>
+    </array>
+    <key>WatchPaths</key>
+    <array>
+        <string>/Users/silvio_requena/Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/macOS-Silvio-Salud</string>
+    </array>
+    <key>ThrottleInterval</key>
+    <integer>60</integer>
+    <key>StandardOutPath</key>
+    <string>/Users/silvio_requena/Code/pain-control/data/logs/auto-import.stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/silvio_requena/Code/pain-control/data/logs/auto-import.stderr.log</string>
+</dict>
+</plist>

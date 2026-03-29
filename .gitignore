@@ -37,6 +37,7 @@ dashboard/node_modules/
 
 # Claude Code
 .claude/
+.superpowers/
 
 # Imports (keep dir, ignore data)
 data/imports/*

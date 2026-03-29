@@ -95,6 +95,8 @@ def list_entries(
         selectinload(DailyEntry.nutrition_records),
         selectinload(DailyEntry.weather_records),
         selectinload(DailyEntry.apple_health_records),
+        selectinload(DailyEntry.nutrition_import_records),
+        selectinload(DailyEntry.workout_records),
         selectinload(DailyEntry.extras),
     )
     if start_date:

@@ -52,6 +52,12 @@ class DailyEntry(Base):
     apple_health_records: Mapped[list["AppleHealthRecord"]] = relationship(
         back_populates="entry", cascade="all, delete-orphan"
     )
+    nutrition_import_records: Mapped[list["NutritionImportRecord"]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan"
+    )
+    workout_records: Mapped[list["WorkoutRecord"]] = relationship(
+        back_populates="entry", cascade="all, delete-orphan"
+    )
     extras: Mapped[list["Extra"]] = relationship(
         back_populates="entry", cascade="all, delete-orphan"
     )
@@ -171,6 +177,7 @@ class AppleHealthRecord(Base):
     entry_id: Mapped[int] = mapped_column(
         ForeignKey("daily_entries.id"), nullable=False, index=True
     )
+    # Core metrics (existing)
     sleep_hours: Mapped[float | None] = mapped_column(Float)
     sleep_quality: Mapped[str | None] = mapped_column(Text)
     resting_hr: Mapped[int | None] = mapped_column(Integer)
@@ -178,9 +185,95 @@ class AppleHealthRecord(Base):
     steps: Mapped[int | None] = mapped_column(Integer)
     active_calories: Mapped[int | None] = mapped_column(Integer)
     spo2_pct: Mapped[float | None] = mapped_column(Float)
-    raw_data: Mapped[str | None] = mapped_column(Text)  # JSON string
+    raw_data: Mapped[str | None] = mapped_column(Text)
+    # Sleep detail
+    sleep_rem_hours: Mapped[float | None] = mapped_column(Float)
+    # Activity
+    distance_km: Mapped[float | None] = mapped_column(Float)
+    flights_climbed: Mapped[int | None] = mapped_column(Integer)
+    resting_energy_kj: Mapped[float | None] = mapped_column(Float)
+    exercise_intensity: Mapped[float | None] = mapped_column(Float)
+    # Cardiovascular
+    walking_hr_avg: Mapped[int | None] = mapped_column(Integer)
+    vo2_max: Mapped[float | None] = mapped_column(Float)
+    cardio_recovery: Mapped[float | None] = mapped_column(Float)
+    # Walking gait analysis
+    step_length_cm: Mapped[float | None] = mapped_column(Float)
+    walking_asymmetry_pct: Mapped[float | None] = mapped_column(Float)
+    double_support_pct: Mapped[float | None] = mapped_column(Float)
+    walking_speed_kmh: Mapped[float | None] = mapped_column(Float)
+    # Respiratory
+    respiratory_rate: Mapped[float | None] = mapped_column(Float)
+    breathing_disturbances: Mapped[float | None] = mapped_column(Float)
+    # Body composition
+    weight_kg: Mapped[float | None] = mapped_column(Float)
+    body_fat_pct: Mapped[float | None] = mapped_column(Float)
+    # Environmental
+    daylight_min: Mapped[float | None] = mapped_column(Float)
 
     entry: Mapped["DailyEntry"] = relationship(back_populates="apple_health_records")
+
+
+class NutritionImportRecord(Base):
+    __tablename__ = "nutrition_import_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_entries.id"), nullable=False, index=True
+    )
+    source: Mapped[str] = mapped_column(String(50), nullable=False, default="apple_health")
+    # Macronutrients
+    calories_kj: Mapped[float | None] = mapped_column(Float)
+    protein_g: Mapped[float | None] = mapped_column(Float)
+    carbs_g: Mapped[float | None] = mapped_column(Float)
+    fat_total_g: Mapped[float | None] = mapped_column(Float)
+    fat_saturated_g: Mapped[float | None] = mapped_column(Float)
+    fiber_g: Mapped[float | None] = mapped_column(Float)
+    sugar_g: Mapped[float | None] = mapped_column(Float)
+    # Hydration
+    water_ml: Mapped[float | None] = mapped_column(Float)
+    caffeine_mg: Mapped[float | None] = mapped_column(Float)
+    # Minerals
+    sodium_mg: Mapped[float | None] = mapped_column(Float)
+    potassium_mg: Mapped[float | None] = mapped_column(Float)
+    magnesium_mg: Mapped[float | None] = mapped_column(Float)
+    calcium_mg: Mapped[float | None] = mapped_column(Float)
+    iron_mg: Mapped[float | None] = mapped_column(Float)
+    zinc_mg: Mapped[float | None] = mapped_column(Float)
+    cholesterol_mg: Mapped[float | None] = mapped_column(Float)
+    # Vitamins
+    vitamin_a_mcg: Mapped[float | None] = mapped_column(Float)
+    vitamin_c_mg: Mapped[float | None] = mapped_column(Float)
+    vitamin_d_mcg: Mapped[float | None] = mapped_column(Float)
+    vitamin_e_mg: Mapped[float | None] = mapped_column(Float)
+    vitamin_k_mcg: Mapped[float | None] = mapped_column(Float)
+    vitamin_b6_mg: Mapped[float | None] = mapped_column(Float)
+    vitamin_b12_mcg: Mapped[float | None] = mapped_column(Float)
+    folate_mcg: Mapped[float | None] = mapped_column(Float)
+    niacin_mg: Mapped[float | None] = mapped_column(Float)
+
+    entry: Mapped["DailyEntry"] = relationship(back_populates="nutrition_import_records")
+
+
+class WorkoutRecord(Base):
+    __tablename__ = "workout_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    entry_id: Mapped[int] = mapped_column(
+        ForeignKey("daily_entries.id"), nullable=False, index=True
+    )
+    workout_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    start_time: Mapped[datetime.datetime | None] = mapped_column(DateTime)
+    end_time: Mapped[datetime.datetime | None] = mapped_column(DateTime)
+    duration_min: Mapped[float | None] = mapped_column(Float)
+    active_energy_kj: Mapped[float | None] = mapped_column(Float)
+    intensity: Mapped[float | None] = mapped_column(Float)
+    max_hr: Mapped[int | None] = mapped_column(Integer)
+    avg_hr: Mapped[int | None] = mapped_column(Integer)
+    distance_km: Mapped[float | None] = mapped_column(Float)
+    steps: Mapped[int | None] = mapped_column(Integer)
+
+    entry: Mapped["DailyEntry"] = relationship(back_populates="workout_records")
 
 
 class Extra(Base):

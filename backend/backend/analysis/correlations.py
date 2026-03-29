@@ -9,6 +9,60 @@ from backend.db.models import (
     DailyEntry,
 )
 
+_APPLE_HEALTH_FIELDS = [
+    "sleep_hours",
+    "resting_hr",
+    "hrv_ms",
+    "steps",
+    "active_calories",
+    "spo2_pct",
+    "sleep_rem_hours",
+    "distance_km",
+    "flights_climbed",
+    "resting_energy_kj",
+    "exercise_intensity",
+    "walking_hr_avg",
+    "vo2_max",
+    "cardio_recovery",
+    "step_length_cm",
+    "walking_asymmetry_pct",
+    "double_support_pct",
+    "walking_speed_kmh",
+    "respiratory_rate",
+    "breathing_disturbances",
+    "weight_kg",
+    "body_fat_pct",
+    "daylight_min",
+]
+
+_NUTRITION_IMPORT_FIELDS = [
+    "calories_kj",
+    "protein_g",
+    "carbs_g",
+    "fat_total_g",
+    "fat_saturated_g",
+    "fiber_g",
+    "sugar_g",
+    "water_ml",
+    "caffeine_mg",
+    "sodium_mg",
+    "potassium_mg",
+    "magnesium_mg",
+    "calcium_mg",
+    "iron_mg",
+    "zinc_mg",
+    "cholesterol_mg",
+    "vitamin_d_mcg",
+    "vitamin_c_mg",
+    "vitamin_a_mcg",
+    "vitamin_e_mg",
+    "vitamin_k_mcg",
+    "vitamin_b6_mg",
+    "vitamin_b12_mcg",
+    "folate_mcg",
+    "niacin_mg",
+]
+
 
 def build_daily_dataframe(
     db: Session,
@@ -25,6 +79,8 @@ def build_daily_dataframe(
         selectinload(DailyEntry.nutrition_records),
         selectinload(DailyEntry.weather_records),
         selectinload(DailyEntry.apple_health_records),
+        selectinload(DailyEntry.nutrition_import_records),
+        selectinload(DailyEntry.workout_records),
         selectinload(DailyEntry.extras),
     )
     if start_date:
@@ -65,18 +121,27 @@ def build_daily_dataframe(
         row["water_liters"] = n.water_liters if n else None
 
         w = entry.weather_records[0] if entry.weather_records else None
-        row["temperature_c"] = w.temperature_c if w else None
-        row["humidity_pct"] = w.humidity_pct if w else None
-        row["pressure_hpa"] = w.pressure_hpa if w else None
-        row["pressure_change_hpa"] = w.pressure_change_hpa if w else None
+        for field in ("temperature_c", "humidity_pct", "pressure_hpa", "pressure_change_hpa"):
+            row[field] = getattr(w, field, None)
 
         ah = entry.apple_health_records[0] if entry.apple_health_records else None
-        row["sleep_hours"] = ah.sleep_hours if ah else None
-        row["resting_hr"] = ah.resting_hr if ah else None
-        row["hrv_ms"] = ah.hrv_ms if ah else None
-        row["steps"] = ah.steps if ah else None
-        row["active_calories"] = ah.active_calories if ah else None
-        row["spo2_pct"] = ah.spo2_pct if ah else None
+        for field in _APPLE_HEALTH_FIELDS:
+            row[field] = getattr(ah, field, None) if ah else None
+
+        ni = entry.nutrition_import_records[0] if entry.nutrition_import_records else None
+        for field in _NUTRITION_IMPORT_FIELDS:
+            row[field] = getattr(ni, field, None) if ni else None
+
+        wrs = entry.workout_records
+        row["workout_count"] = len(wrs)
+        row["workout_total_min"] = sum(w.duration_min or 0 for w in wrs)
+        row["workout_total_energy_kj"] = sum(w.active_energy_kj or 0 for w in wrs)
+        hrs = [w.max_hr for w in wrs if w.max_hr]
+        row["workout_max_hr"] = max(hrs) if hrs else None
+        avgs = [w.avg_hr for w in wrs if w.avg_hr]
+        row["workout_avg_hr"] = round(sum(avgs) / len(avgs)) if avgs else None
+        intensities = [w.intensity for w in wrs if w.intensity is not None]
+        row["workout_max_intensity"] = max(intensities) if intensities else None
 
         rows.append(row)
 
@@ -134,7 +199,7 @@ def compute_lag_correlation(
     """
     results = []
     for lag in range(-max_lag, max_lag + 1):
-        shifted = df[variable] if lag == 0 else df[variable].shift(-lag)
+        shifted = df[variable].shift(-lag)
 
         temp_df = pd.DataFrame({target: df[target], variable: shifted}).dropna()
         if len(temp_df) < 5:

@@ -39,6 +39,67 @@ export interface AppleHealthRecord {
   steps: number | null;
   active_calories: number | null;
   spo2_pct: number | null;
+  sleep_rem_hours: number | null;
+  distance_km: number | null;
+  flights_climbed: number | null;
+  resting_energy_kj: number | null;
+  exercise_intensity: number | null;
+  walking_hr_avg: number | null;
+  vo2_max: number | null;
+  cardio_recovery: number | null;
+  step_length_cm: number | null;
+  walking_asymmetry_pct: number | null;
+  double_support_pct: number | null;
+  walking_speed_kmh: number | null;
+  respiratory_rate: number | null;
+  breathing_disturbances: number | null;
+  weight_kg: number | null;
+  body_fat_pct: number | null;
+  daylight_min: number | null;
+}
+
+export interface NutritionImportRecord {
+  id: number;
+  source: string;
+  calories_kj: number | null;
+  protein_g: number | null;
+  carbs_g: number | null;
+  fat_total_g: number | null;
+  fat_saturated_g: number | null;
+  fiber_g: number | null;
+  sugar_g: number | null;
+  water_ml: number | null;
+  caffeine_mg: number | null;
+  sodium_mg: number | null;
+  potassium_mg: number | null;
+  magnesium_mg: number | null;
+  calcium_mg: number | null;
+  iron_mg: number | null;
+  zinc_mg: number | null;
+  cholesterol_mg: number | null;
+  vitamin_a_mcg: number | null;
+  vitamin_c_mg: number | null;
+  vitamin_d_mcg: number | null;
+  vitamin_e_mg: number | null;
+  vitamin_k_mcg: number | null;
+  vitamin_b6_mg: number | null;
+  vitamin_b12_mcg: number | null;
+  folate_mcg: number | null;
+  niacin_mg: number | null;
+}
+
+export interface WorkoutRecord {
+  id: number;
+  workout_type: string;
+  start_time: string | null;
+  end_time: string | null;
+  duration_min: number | null;
+  active_energy_kj: number | null;
+  intensity: number | null;
+  max_hr: number | null;
+  avg_hr: number | null;
+  distance_km: number | null;
+  steps: number | null;
 }
 
 export interface DailyEntry {
@@ -73,6 +134,8 @@ export interface DailyEntry {
   }>;
   weather_records: WeatherRecord[];
   apple_health_records: AppleHealthRecord[];
+  nutrition_import_records: NutritionImportRecord[];
+  workout_records: WorkoutRecord[];
   extras: Array<{ id: number; key: string; value: string; value_type: string; first_seen: string | null }>;
 }
 
