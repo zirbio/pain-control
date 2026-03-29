@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import {
   format,
-  parseISO,
   startOfMonth,
   endOfMonth,
   startOfWeek,
@@ -12,7 +11,6 @@ import {
   addMonths,
   subMonths,
   isSameMonth,
-  isSameDay,
   isAfter,
 } from "date-fns";
 import { es } from "date-fns/locale";
@@ -27,7 +25,7 @@ interface CalendarViewProps {
 
 const DAY_HEADERS = ["L", "M", "X", "J", "V", "S", "D"];
 
-export function CalendarView({
+export const CalendarView = memo(function CalendarView({
   entries,
   selectedDate,
   onSelectDate,
@@ -78,7 +76,7 @@ export function CalendarView({
     return days;
   }, [currentMonth, painByDate]);
 
-  const selectedDateObj = selectedDate ? parseISO(selectedDate) : null;
+  const todayStr = format(new Date(), "yyyy-MM-dd");
 
   return (
     <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-5">
@@ -86,7 +84,7 @@ export function CalendarView({
       <div className="flex items-center justify-between mb-5">
         <button
           onClick={() => setCurrentMonth((m) => subMonths(m, 1))}
-          className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+          className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors focus-visible:ring-2 focus-visible:ring-accent-info"
           aria-label="Mes anterior"
         >
           &lsaquo;
@@ -96,7 +94,7 @@ export function CalendarView({
         </h2>
         <button
           onClick={() => setCurrentMonth((m) => addMonths(m, 1))}
-          className="w-8 h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors"
+          className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-bg-tertiary transition-colors focus-visible:ring-2 focus-visible:ring-accent-info"
           aria-label="Mes siguiente"
         >
           &rsaquo;
@@ -118,9 +116,8 @@ export function CalendarView({
       {/* Calendar grid */}
       <div className="grid grid-cols-7 gap-1">
         {calendarDays.map((day) => {
-          const isSelected =
-            selectedDateObj !== null && isSameDay(day.date, selectedDateObj);
-          const isToday = isSameDay(day.date, new Date());
+          const isSelected = selectedDate === day.dateStr;
+          const isToday = day.dateStr === todayStr;
           const hasPain = day.pain !== null;
 
           return (
@@ -132,9 +129,10 @@ export function CalendarView({
                 }
               }}
               disabled={day.future || !day.inMonth}
+              aria-label={format(day.date, "d 'de' MMMM yyyy", { locale: es })}
               className={`
                 relative flex flex-col items-center justify-center
-                h-10 rounded-lg transition-all duration-150
+                min-h-[44px] sm:h-10 rounded-lg transition-all duration-150
                 ${!day.inMonth ? "opacity-20 cursor-default" : ""}
                 ${day.future ? "opacity-20 cursor-default" : ""}
                 ${day.inMonth && !day.future ? "cursor-pointer hover:bg-bg-tertiary" : ""}
@@ -164,4 +162,4 @@ export function CalendarView({
       </div>
     </div>
   );
-}
+});

@@ -1,9 +1,12 @@
 "use client";
 
+import { memo } from "react";
+import Link from "next/link";
 import { AlertCard } from "./alert-card";
 import { useRankings } from "@/hooks/use-analysis";
+import { formatVariable } from "@/lib/utils";
 
-export function AlertsPanel() {
+export const AlertsPanel = memo(function AlertsPanel() {
   const { data: rankings, isLoading } = useRankings();
 
   if (isLoading) {
@@ -18,49 +21,36 @@ export function AlertsPanel() {
 
   if (significantCorrelations.length === 0) {
     return (
-      <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-6 flex items-center justify-center h-40">
+      <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-6 flex flex-col items-center justify-center h-40">
         <span className="text-text-muted font-body text-body">
           Sin alertas — necesitas más datos para detectar patrones
         </span>
+        <Link
+          href="/history"
+          className="font-body text-small text-accent-info hover:text-text-primary transition-colors mt-2 inline-block"
+        >
+          Registra más datos →
+        </Link>
       </div>
     );
   }
 
-  const variableLabels: Record<string, string> = {
-    sleep_hours: "horas de sueño",
-    steps: "pasos diarios",
-    stress_level: "nivel de estrés",
-    activity_minutes: "minutos de actividad",
-    pressure_hpa: "presión barométrica",
-    pressure_change_hpa: "cambio de presión",
-    humidity_pct: "humedad",
-    temperature_c: "temperatura",
-    medication_effectiveness: "efectividad de medicación",
-    mood_score: "estado de ánimo",
-    resting_hr: "frecuencia cardíaca en reposo",
-    hrv_ms: "variabilidad cardíaca (HRV)",
-    alcohol: "consumo de alcohol",
-    caffeine_cups: "consumo de cafeína",
-    water_liters: "hidratación",
-    active_calories: "calorías activas",
-  };
-
   return (
     <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-4">
-      <h3 className="font-body text-label uppercase text-text-muted tracking-widest mb-4">
+      <h2 className="font-body text-label uppercase text-text-muted tracking-widest mb-4">
         ◆ Alertas
-      </h3>
+      </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {significantCorrelations.map((corr) => {
-          const label = variableLabels[corr.variable] || corr.variable.replace(/_/g, " ");
+          const label = formatVariable(corr.variable);
           const direction = corr.coefficient > 0 ? "+" : "";
-          const effect = corr.coefficient > 0 ? "empeora" : "mejora";
+          const effect = corr.coefficient > 0 ? "se asocia con más dolor" : "se asocia con menos dolor";
 
           return (
             <AlertCard
               key={corr.variable}
               title="Correlación detectada"
-              body={`${label} ${effect} tu dolor (${direction}${corr.coefficient.toFixed(2)})`}
+              body={`${label} ${effect} (${direction}${corr.coefficient.toFixed(2)})`}
               metadata={`p=${corr.p_value.toFixed(3)} · n=${corr.n} días`}
             />
           );
@@ -68,4 +58,4 @@ export function AlertsPanel() {
       </div>
     </div>
   );
-}
+});

@@ -33,15 +33,26 @@ def test_pain_record_intensity_out_of_range():
 def test_daily_entry_create_minimal():
     entry = DailyEntryCreate(
         date=datetime.date(2026, 3, 27),
+        stretching=False,
         pain_records=[PainRecordCreate(location="lumbar", intensity=5)],
     )
     assert entry.date == datetime.date(2026, 3, 27)
+    assert entry.stretching is False
     assert len(entry.pain_records) == 1
+
+
+def test_daily_entry_create_missing_stretching():
+    with pytest.raises(ValidationError):
+        DailyEntryCreate(
+            date=datetime.date(2026, 3, 27),
+            pain_records=[PainRecordCreate(location="lumbar", intensity=5)],
+        )
 
 
 def test_daily_entry_create_full():
     entry = DailyEntryCreate(
         date=datetime.date(2026, 3, 27),
+        stretching=True,
         pain_records=[PainRecordCreate(location="lumbar", intensity=5)],
         medication_records=[
             MedicationRecordCreate(
@@ -56,6 +67,7 @@ def test_daily_entry_create_full():
         nutrition_records=[NutritionRecordCreate(alcohol=True, caffeine_cups=2)],
         extras=[ExtraCreate(key="rigidez_matutina", value="7", value_type="integer")],
     )
+    assert entry.stretching is True
     assert len(entry.medication_records) == 1
     assert entry.nutrition_records[0].alcohol is True
 

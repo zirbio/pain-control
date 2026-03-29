@@ -22,6 +22,7 @@ router = APIRouter(prefix="/api/entries", tags=["entries"])
 
 def _populate_entry(entry: DailyEntry, data: DailyEntryCreate) -> None:
     """Populate a DailyEntry with records from the create schema."""
+    entry.stretching = data.stretching
     entry.pain_records = [PainRecord(**r.model_dump()) for r in data.pain_records]
     entry.medication_records = [MedicationRecord(**r.model_dump()) for r in data.medication_records]
     entry.mood_records = [

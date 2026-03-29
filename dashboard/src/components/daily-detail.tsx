@@ -2,7 +2,7 @@
 
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { getPainColor } from "@/lib/design-tokens";
+import { getPainColor, accentColors, textColors } from "@/lib/design-tokens";
 import type { DailyEntry } from "@/lib/api";
 
 interface DailyDetailProps {
@@ -53,7 +53,11 @@ function PainBar({ location, intensity }: { location: string; intensity: number 
 
 function SkeletonDetail() {
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      role="status"
+      aria-label="Cargando detalles"
+    >
       <div className="skeleton h-6 w-3/4" />
       <div className="skeleton h-4 w-1/2" />
       <div className="skeleton h-20 w-full" />
@@ -66,8 +70,8 @@ function SkeletonDetail() {
 }
 
 const PAIN_EFFECT_COLORS: Record<string, string> = {
-  mejoró: "#6B8A7A",
-  empeoró: "#C4512A",
+  mejoró: accentColors.positive,
+  empeoró: accentColors.negative,
 };
 
 const PAIN_EFFECT_LABELS: Record<string, string> = {
@@ -79,7 +83,7 @@ function PainEffectLabel({ effect }: { effect: string }) {
   return (
     <span
       className="font-body text-small"
-      style={{ color: PAIN_EFFECT_COLORS[effect] ?? "#78716C" }}
+      style={{ color: PAIN_EFFECT_COLORS[effect] ?? textColors.muted }}
     >
       {PAIN_EFFECT_LABELS[effect] ?? "Sin cambio"}
     </span>
@@ -280,7 +284,7 @@ export function DailyDetail({ entry, isLoading }: DailyDetailProps) {
       <div>
         <SectionTitle>Nutrici&oacute;n</SectionTitle>
         {nutrition ? (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <span className="font-body text-small text-text-muted block">
                 Agua
@@ -323,7 +327,7 @@ export function DailyDetail({ entry, isLoading }: DailyDetailProps) {
       <div>
         <SectionTitle>Clima</SectionTitle>
         {weather ? (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
             {weather.conditions && (
               <div className="col-span-2 mb-1">
                 <span className="font-body text-small text-text-primary capitalize">
@@ -382,7 +386,7 @@ export function DailyDetail({ entry, isLoading }: DailyDetailProps) {
       <div>
         <SectionTitle>Apple Health</SectionTitle>
         {health ? (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
             {health.sleep_hours !== null && (
               <div>
                 <span className="font-body text-small text-text-muted block">

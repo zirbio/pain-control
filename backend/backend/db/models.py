@@ -27,6 +27,7 @@ class DailyEntry(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(
         DateTime, server_default=func.now(), onupdate=func.now(), nullable=False
     )
+    stretching: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
 
     pain_records: Mapped[list["PainRecord"]] = relationship(
         back_populates="entry", cascade="all, delete-orphan"

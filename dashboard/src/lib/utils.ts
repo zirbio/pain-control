@@ -6,11 +6,40 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Converts snake_case variable names to Title Case labels.
- * e.g. "sleep_hours" -> "Sleep Hours"
+ * Spanish display labels for analysis variables.
+ * Used in correlation matrix, lag explorer, and other analysis views.
+ */
+const VARIABLE_LABELS: Record<string, string> = {
+  sleep_hours: "Horas de sueño",
+  steps: "Pasos",
+  stress_level: "Nivel de estrés",
+  resting_heart_rate: "FC en reposo",
+  resting_hr: "FC en reposo",
+  hrv: "VFC (HRV)",
+  hrv_ms: "VFC (HRV)",
+  active_energy: "Energía activa",
+  med_effectiveness: "Eficacia medicación",
+  medication_effectiveness: "Eficacia medicación",
+  mood_score: "Ánimo",
+  activity_pain_effect: "Efecto actividad",
+  activity_minutes: "Minutos actividad",
+  weather_pressure: "Presión atmosférica",
+  pressure_hpa: "Presión (hPa)",
+  pressure_change_hpa: "Cambio presión (hPa)",
+  weather_temperature: "Temperatura",
+  weather_humidity: "Humedad",
+  humidity_pct: "Humedad (%)",
+  alcohol: "Alcohol",
+  caffeine_cups: "Cafés",
+  pain_max: "Dolor (máx)",
+};
+
+/**
+ * Returns a human-readable Spanish label for a variable name.
+ * Falls back to Title Case conversion for unknown variables.
  */
 export function formatVariable(name: string): string {
-  return name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return VARIABLE_LABELS[name] ?? name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 /**

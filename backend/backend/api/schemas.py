@@ -55,6 +55,7 @@ class ExtraCreate(BaseModel):
 
 class DailyEntryCreate(BaseModel):
     date: datetime.date
+    stretching: bool
     pain_records: list[PainRecordCreate] = []
     medication_records: list[MedicationRecordCreate] = []
     mood_records: list[MoodRecordCreate] = []
@@ -230,6 +231,7 @@ class WorkoutRecordResponse(BaseModel):
 class DailyEntryResponse(BaseModel):
     id: int
     date: datetime.date
+    stretching: bool | None = None
     created_at: datetime.datetime
     updated_at: datetime.datetime
     pain_records: list[PainRecordResponse]
