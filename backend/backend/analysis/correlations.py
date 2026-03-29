@@ -117,14 +117,12 @@ def build_daily_dataframe(
 
         n = entry.nutrition_records[0] if entry.nutrition_records else None
         row["alcohol"] = int(n.alcohol) if n and n.alcohol is not None else None
-        row["caffeine_cups"] = n.caffeine_cups if n else None
-        row["water_liters"] = n.water_liters if n else None
+        row["caffeine_cups"] = getattr(n, "caffeine_cups", None)
+        row["water_liters"] = getattr(n, "water_liters", None)
 
         w = entry.weather_records[0] if entry.weather_records else None
-        row["temperature_c"] = w.temperature_c if w else None
-        row["humidity_pct"] = w.humidity_pct if w else None
-        row["pressure_hpa"] = w.pressure_hpa if w else None
-        row["pressure_change_hpa"] = w.pressure_change_hpa if w else None
+        for field in ("temperature_c", "humidity_pct", "pressure_hpa", "pressure_change_hpa"):
+            row[field] = getattr(w, field, None)
 
         ah = entry.apple_health_records[0] if entry.apple_health_records else None
         for field in _APPLE_HEALTH_FIELDS:
@@ -135,23 +133,15 @@ def build_daily_dataframe(
             row[field] = getattr(ni, field, None) if ni else None
 
         wrs = entry.workout_records
-        if wrs:
-            row["workout_count"] = len(wrs)
-            row["workout_total_min"] = sum(w.duration_min or 0 for w in wrs)
-            row["workout_total_energy_kj"] = sum(w.active_energy_kj or 0 for w in wrs)
-            hrs = [w.max_hr for w in wrs if w.max_hr]
-            row["workout_max_hr"] = max(hrs) if hrs else None
-            avgs = [w.avg_hr for w in wrs if w.avg_hr]
-            row["workout_avg_hr"] = round(sum(avgs) / len(avgs)) if avgs else None
-            intensities = [w.intensity for w in wrs if w.intensity]
-            row["workout_max_intensity"] = max(intensities) if intensities else None
-        else:
-            row["workout_count"] = 0
-            row["workout_total_min"] = 0
-            row["workout_total_energy_kj"] = 0
-            row["workout_max_hr"] = None
-            row["workout_avg_hr"] = None
-            row["workout_max_intensity"] = None
+        row["workout_count"] = len(wrs)
+        row["workout_total_min"] = sum(w.duration_min or 0 for w in wrs)
+        row["workout_total_energy_kj"] = sum(w.active_energy_kj or 0 for w in wrs)
+        hrs = [w.max_hr for w in wrs if w.max_hr]
+        row["workout_max_hr"] = max(hrs) if hrs else None
+        avgs = [w.avg_hr for w in wrs if w.avg_hr]
+        row["workout_avg_hr"] = round(sum(avgs) / len(avgs)) if avgs else None
+        intensities = [w.intensity for w in wrs if w.intensity is not None]
+        row["workout_max_intensity"] = max(intensities) if intensities else None
 
         rows.append(row)
 
@@ -209,7 +199,7 @@ def compute_lag_correlation(
     """
     results = []
     for lag in range(-max_lag, max_lag + 1):
-        shifted = df[variable] if lag == 0 else df[variable].shift(-lag)
+        shifted = df[variable].shift(-lag)
 
         temp_df = pd.DataFrame({target: df[target], variable: shifted}).dropna()
         if len(temp_df) < 5:

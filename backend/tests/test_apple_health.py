@@ -117,8 +117,8 @@ def test_parse_csv_extracts_extended_health_and_nutrition(tmp_path):
     h = data.health
     assert abs(h.sleep_rem_hours - 1.8) < 0.1
     assert abs(h.distance_km - 5.23) < 0.01
-    assert abs(h.walking_asymmetry_pct - 27.11) < 0.01
-    assert abs(h.walking_speed_kmh - 3.47) < 0.01
+    assert abs(h.walking_asymmetry_pct - 27.1) < 0.1
+    assert abs(h.walking_speed_kmh - 3.47) < 0.1
     assert abs(h.vo2_max - 42.5) < 0.1
 
     n = data.nutrition

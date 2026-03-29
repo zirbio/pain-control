@@ -321,7 +321,7 @@ class AppleHealthImporter:
                 has_nutrition = False
                 for field_name in ncols:
                     val = self._csv_float(row, field_name, ncols)
-                    nutrition_values[field_name] = val
+                    nutrition_values[field_name] = round(val, 2) if val is not None else None
                     if val is not None:
                         has_nutrition = True
 
