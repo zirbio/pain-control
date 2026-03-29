@@ -166,3 +166,41 @@ def test_import_idempotent(client_with_imports):
     days2 = response2.json()["days_imported"]
 
     assert days1 == days2  # Same count, not doubled
+
+
+@pytest.fixture()
+def client_with_healthmetrics_csv(tmp_path, monkeypatch):
+    engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
+    Base.metadata.create_all(engine)
+    TestSession = sessionmaker(bind=engine)
+
+    imports_dir = tmp_path / "imports"
+    imports_dir.mkdir()
+
+    csv_content = (
+        "Fecha/Hora,Energía Activa (kJ),Frecuencia Cardiaca en Reposo (bpm),"
+        "Variabilidad de Frecuencia Cardíaca (ms)\n"
+        "2026-03-28 00:00,1300,58,48.7\n"
+    )
+    (imports_dir / "HealthMetrics-2026-03-28.csv").write_text(csv_content)
+
+    def override_get_db():
+        session = TestSession()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    monkeypatch.setattr("backend.api.routers.imports.get_imports_dir", lambda: str(imports_dir))
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
+def test_import_healthmetrics_csv(client_with_healthmetrics_csv):
+    """HealthMetrics-*.csv files (Health Auto Export naming) are imported."""
+    response = client_with_healthmetrics_csv.post("/api/imports/apple-health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["files_processed"] == 1
+    assert data["days_imported"] == 1

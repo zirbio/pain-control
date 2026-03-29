@@ -108,7 +108,9 @@ def import_apple_health(db: Session = Depends(get_db)):
         return {"files_processed": 0, "days_imported": 0, "errors": ["imports directory not found"]}
 
     xml_files = list(imports_dir.glob("*.xml"))
-    csv_files = list(imports_dir.glob("HealthAutoExport-*.csv"))
+    csv_files = list(imports_dir.glob("HealthAutoExport-*.csv")) + list(
+        imports_dir.glob("HealthMetrics-*.csv")
+    )
     workout_files = list(imports_dir.glob("Workouts-*.csv"))
     health_files = xml_files + csv_files
 
