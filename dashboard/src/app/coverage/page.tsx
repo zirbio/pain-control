@@ -7,6 +7,7 @@ import { CoverageHeatmap, MANUAL_CATEGORIES } from "@/components/coverage-heatma
 import { useEntries } from "@/hooks/use-entries";
 import { accentColors } from "@/lib/design-tokens";
 import type { DailyEntry } from "@/lib/api";
+import { EmptyState } from "@/components/empty-state";
 
 const RANGE_OPTIONS = [7, 14, 30] as const;
 
@@ -73,7 +74,7 @@ export default function CoveragePage() {
               {/* Arrow nav */}
               <button
                 onClick={() => setOffset((o) => o + 1)}
-                className="font-body text-body text-text-muted hover:text-text-secondary px-2 py-1 rounded transition-colors"
+                className="font-body text-body text-text-muted hover:text-text-secondary px-2 py-1 min-h-[44px] sm:min-h-0 rounded transition-colors focus-visible:ring-2 focus-visible:ring-accent-info"
                 aria-label="Periodo anterior"
               >
                 &larr;
@@ -87,7 +88,7 @@ export default function CoveragePage() {
                     setDays(r);
                     setOffset(0);
                   }}
-                  className={`font-body text-small px-3 py-1.5 rounded transition-colors ${
+                  className={`font-body text-small px-3 py-1.5 min-h-[44px] sm:min-h-0 rounded transition-colors focus-visible:ring-2 focus-visible:ring-accent-info ${
                     days === r
                       ? "bg-bg-tertiary text-text-primary"
                       : "text-text-muted hover:text-text-secondary"
@@ -100,7 +101,7 @@ export default function CoveragePage() {
               <button
                 onClick={() => setOffset((o) => Math.max(0, o - 1))}
                 disabled={offset === 0}
-                className="font-body text-body text-text-muted hover:text-text-secondary px-2 py-1 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="font-body text-body text-text-muted hover:text-text-secondary px-2 py-1 min-h-[44px] sm:min-h-0 rounded transition-colors focus-visible:ring-2 focus-visible:ring-accent-info disabled:opacity-30 disabled:cursor-not-allowed"
                 aria-label="Periodo siguiente"
               >
                 &rarr;
@@ -113,36 +114,42 @@ export default function CoveragePage() {
             {format(startDate, "d MMM")} &mdash; {format(endDate, "d MMM yyyy")}
           </p>
 
-          {/* Summary bar */}
-          <div className="bg-bg-secondary rounded-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-body text-body text-text-secondary">
-                Check-in completo (6 categorías manuales)
-              </span>
-              <span
-                className="font-display text-body tabular-nums"
-                style={{ color: barColor }}
-              >
-                {pct}% &mdash; {completeDays} de {totalDays} días
-              </span>
-            </div>
-            <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${pct}%`, backgroundColor: barColor }}
-              />
-            </div>
-          </div>
+          {!isLoading && !entries.length ? (
+            <EmptyState variant="no-data" />
+          ) : (
+            <>
+              {/* Summary bar */}
+              <div className="bg-bg-secondary rounded-card p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-body text-body text-text-secondary">
+                    Registro completo (6 categorías manuales)
+                  </span>
+                  <span
+                    className="font-display text-body tabular-nums"
+                    style={{ color: barColor }}
+                  >
+                    {pct}% &mdash; {completeDays} de {totalDays} días
+                  </span>
+                </div>
+                <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${pct}%`, backgroundColor: barColor }}
+                  />
+                </div>
+              </div>
 
-          {/* Heatmap */}
-          <div className="bg-bg-secondary rounded-card p-4">
-            <CoverageHeatmap
-              entries={entries}
-              startDate={startDate}
-              endDate={endDate}
-              isLoading={isLoading}
-            />
-          </div>
+              {/* Heatmap */}
+              <div className="bg-bg-secondary rounded-card p-4">
+                <CoverageHeatmap
+                  entries={entries}
+                  startDate={startDate}
+                  endDate={endDate}
+                  isLoading={isLoading}
+                />
+              </div>
+            </>
+          )}
         </div>
       </main>
     </>
