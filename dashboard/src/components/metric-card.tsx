@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { getPainColor } from "@/lib/design-tokens";
+import { memo, useEffect, useRef } from "react";
+import { accentColors, getPainColor, textColors } from "@/lib/design-tokens";
 
 interface MetricCardProps {
   label: string;
@@ -12,12 +12,12 @@ interface MetricCardProps {
   unit?: string;
 }
 
-function AnimatedNumber({ value }: { value: number }) {
-  const [displayed, setDisplayed] = useState(0);
-  const ref = useRef<number>(0);
+function AnimatedNumber({ value, decimals = 1 }: { value: number; decimals?: number }) {
+  const spanRef = useRef<HTMLSpanElement>(null);
+  const prevValue = useRef(0);
 
   useEffect(() => {
-    const start = ref.current;
+    const start = prevValue.current;
     const end = value;
     const duration = 400;
     const startTime = performance.now();
@@ -27,15 +27,16 @@ function AnimatedNumber({ value }: { value: number }) {
       const progress = Math.min(elapsed / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = start + (end - start) * eased;
-      setDisplayed(current);
-      ref.current = current;
+      if (spanRef.current) {
+        spanRef.current.textContent = current.toFixed(decimals);
+      }
       if (progress < 1) requestAnimationFrame(animate);
     }
-
     requestAnimationFrame(animate);
-  }, [value]);
+    prevValue.current = end;
+  }, [value, decimals]);
 
-  return <>{displayed.toFixed(1)}</>;
+  return <span ref={spanRef}>{value.toFixed(decimals)}</span>;
 }
 
 function MiniSparkline({ data, color }: { data: number[]; color: string }) {
@@ -54,7 +55,7 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
     .join(" ");
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-6 mt-2" preserveAspectRatio="none">
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-6 mt-2" preserveAspectRatio="none" role="img" aria-label={`Tendencia: ${data.length} valores`}>
       <polyline
         points={points}
         fill="none"
@@ -68,9 +69,9 @@ function MiniSparkline({ data, color }: { data: number[]; color: string }) {
 }
 
 const trendArrows: Record<string, string> = { up: "\u2197", down: "\u2198", stable: "\u2192" };
-const trendColors: Record<string, string> = { down: "#6B8A7A", up: "#C4512A", stable: "#78716C" };
+const trendColors: Record<string, string> = { down: accentColors.positive, up: accentColors.negative, stable: textColors.muted };
 
-export function MetricCard({
+export const MetricCard = memo(function MetricCard({
   label,
   value,
   trend,
@@ -82,7 +83,7 @@ export function MetricCard({
   const displayColor =
     colorScale === "pain" && numericValue !== null
       ? getPainColor(numericValue)
-      : "#F5F5F4";
+      : textColors.primary;
 
   return (
     <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(26,20,18,0.5)]">
@@ -115,4 +116,4 @@ export function MetricCard({
       )}
     </div>
   );
-}
+});

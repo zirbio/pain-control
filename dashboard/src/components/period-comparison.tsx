@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { format, subDays } from "date-fns";
 import { useReport } from "@/hooks/use-analysis";
-import { accentColors } from "@/lib/design-tokens";
+import { accentColors, textColors } from "@/lib/design-tokens";
 import type { ReportResult } from "@/lib/api";
 
 function StatRow({
@@ -39,11 +39,11 @@ function StatRow({
       </span>
       <span
         className="font-display text-body tabular-nums text-center"
-        style={{ color: diffColor ?? "#F5F5F4" }}
+        style={{ color: diffColor ?? textColors.primary }}
       >
         {valueB ?? "—"}
         {unit && valueB !== null && (
-          <span className="text-small ml-0.5" style={{ color: "#78716C" }}>
+          <span className="text-small ml-0.5" style={{ color: textColors.muted }}>
             {unit}
           </span>
         )}
@@ -94,13 +94,13 @@ function PeriodSummary({
         {label}
       </span>
       <p className="font-body text-small text-text-secondary mt-1">
-        {report.period.start} to {report.period.end} ({report.period.days} days)
+        {report.period.start} a {report.period.end} ({report.period.days} d&iacute;as)
       </p>
     </div>
   );
 }
 
-export function PeriodComparison() {
+export const PeriodComparison = memo(function PeriodComparison() {
   const today = format(new Date(), "yyyy-MM-dd");
   const fourteenAgo = format(subDays(new Date(), 14), "yyyy-MM-dd");
   const twentyEightAgo = format(subDays(new Date(), 28), "yyyy-MM-dd");
@@ -126,40 +126,44 @@ export function PeriodComparison() {
       {/* Date pickers */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div>
-          <span className="font-body text-label uppercase text-text-muted tracking-widest block mb-2">
-            Period A
-          </span>
+          <label htmlFor="period-a-start" className="font-body text-label uppercase text-text-muted tracking-widest block mb-2">
+            Per&iacute;odo 1
+          </label>
           <div className="flex gap-2">
             <input
+              id="period-a-start"
               type="date"
               value={startA}
               onChange={(e) => setStartA(e.target.value)}
-              className="bg-bg-tertiary text-text-primary font-body text-small rounded-md px-3 py-1.5 border border-bg-tertiary outline-none focus:border-accent-info flex-1"
+              className="bg-bg-tertiary text-text-primary font-body text-body sm:text-small rounded-md px-3 py-1.5 min-h-[44px] sm:min-h-0 border border-bg-tertiary focus:border-accent-info focus-visible:ring-2 focus-visible:ring-accent-info flex-1"
             />
             <input
+              id="period-a-end"
               type="date"
               value={endA}
               onChange={(e) => setEndA(e.target.value)}
-              className="bg-bg-tertiary text-text-primary font-body text-small rounded-md px-3 py-1.5 border border-bg-tertiary outline-none focus:border-accent-info flex-1"
+              className="bg-bg-tertiary text-text-primary font-body text-body sm:text-small rounded-md px-3 py-1.5 min-h-[44px] sm:min-h-0 border border-bg-tertiary focus:border-accent-info focus-visible:ring-2 focus-visible:ring-accent-info flex-1"
             />
           </div>
         </div>
         <div>
-          <span className="font-body text-label uppercase text-text-muted tracking-widest block mb-2">
-            Period B
-          </span>
+          <label htmlFor="period-b-start" className="font-body text-label uppercase text-text-muted tracking-widest block mb-2">
+            Per&iacute;odo 2
+          </label>
           <div className="flex gap-2">
             <input
+              id="period-b-start"
               type="date"
               value={startB}
               onChange={(e) => setStartB(e.target.value)}
-              className="bg-bg-tertiary text-text-primary font-body text-small rounded-md px-3 py-1.5 border border-bg-tertiary outline-none focus:border-accent-info flex-1"
+              className="bg-bg-tertiary text-text-primary font-body text-body sm:text-small rounded-md px-3 py-1.5 min-h-[44px] sm:min-h-0 border border-bg-tertiary focus:border-accent-info focus-visible:ring-2 focus-visible:ring-accent-info flex-1"
             />
             <input
+              id="period-b-end"
               type="date"
               value={endB}
               onChange={(e) => setEndB(e.target.value)}
-              className="bg-bg-tertiary text-text-primary font-body text-small rounded-md px-3 py-1.5 border border-bg-tertiary outline-none focus:border-accent-info flex-1"
+              className="bg-bg-tertiary text-text-primary font-body text-body sm:text-small rounded-md px-3 py-1.5 min-h-[44px] sm:min-h-0 border border-bg-tertiary focus:border-accent-info focus-visible:ring-2 focus-visible:ring-accent-info flex-1"
             />
           </div>
         </div>
@@ -167,8 +171,8 @@ export function PeriodComparison() {
 
       {/* Period headers */}
       <div className="flex gap-4 mb-4">
-        <PeriodSummary label="Period A" report={reportA} isLoading={loadingA} />
-        <PeriodSummary label="Period B" report={reportB} isLoading={loadingB} />
+        <PeriodSummary label="Per\u00edodo 1" report={reportA} isLoading={loadingA} />
+        <PeriodSummary label="Per\u00edodo 2" report={reportB} isLoading={loadingB} />
       </div>
 
       {/* Comparison table */}
@@ -183,30 +187,30 @@ export function PeriodComparison() {
           {/* Header */}
           <div className="grid grid-cols-3 gap-4 pb-2 border-b border-bg-tertiary">
             <span className="font-body text-label uppercase text-text-muted tracking-widest">
-              Metric
+              M&eacute;trica
             </span>
             <span className="font-body text-label uppercase text-text-muted tracking-widest text-center">
-              Period A
+              Per&iacute;odo 1
             </span>
             <span className="font-body text-label uppercase text-text-muted tracking-widest text-center">
-              Period B
+              Per&iacute;odo 2
             </span>
           </div>
 
           <StatRow
-            label="Pain (mean)"
+            label="Dolor (media)"
             valueA={formatStat(reportA?.pain?.mean)}
             valueB={formatStat(reportB?.pain?.mean)}
           />
           <StatRow
-            label="Sleep (mean)"
+            label="Sue&ntilde;o (media)"
             valueA={formatStat(reportA?.sleep?.mean)}
             valueB={formatStat(reportB?.sleep?.mean)}
             unit="h"
             higherIsBetter
           />
           <StatRow
-            label="Active days"
+            label="D&iacute;as activos"
             valueA={
               reportA?.activity
                 ? `${reportA.activity.active_days}/${reportA.activity.total_days}`
@@ -219,7 +223,7 @@ export function PeriodComparison() {
             }
           />
           <StatRow
-            label="Med effectiveness"
+            label="Eficacia medicaci&oacute;n"
             valueA={formatStat(reportA?.medication?.mean_effectiveness)}
             valueB={formatStat(reportB?.medication?.mean_effectiveness)}
             unit="/10"
@@ -229,4 +233,4 @@ export function PeriodComparison() {
       )}
     </div>
   );
-}
+});

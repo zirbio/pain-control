@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { format, eachDayOfInterval, isAfter } from "date-fns";
 import { es } from "date-fns/locale";
+import { dataPresent } from "@/lib/design-tokens";
 import type { DailyEntry } from "@/lib/api";
 
 interface CoverageHeatmapProps {
@@ -28,10 +29,10 @@ export const MANUAL_CATEGORIES: CategoryDef[] = [
 ];
 
 const AUTO_CATEGORIES: CategoryDef[] = [
-  { key: "weather", label: "Weather", check: (e) => e.weather_records.length > 0 },
+  { key: "weather", label: "Clima", check: (e) => e.weather_records.length > 0 },
   { key: "appleHealth", label: "Apple Health", check: (e) => e.apple_health_records.length > 0 },
-  { key: "nutriImport", label: "Nutri Import", check: (e) => e.nutrition_import_records.length > 0 },
-  { key: "workouts", label: "Workouts", check: (e) => e.workout_records.length > 0 },
+  { key: "nutriImport", label: "Nutrición imp.", check: (e) => e.nutrition_import_records.length > 0 },
+  { key: "workouts", label: "Entrenos", check: (e) => e.workout_records.length > 0 },
 ];
 
 function buildTooltip(entry: DailyEntry, category: CategoryDef): string {
@@ -95,7 +96,7 @@ function buildTooltip(entry: DailyEntry, category: CategoryDef): string {
   }
 }
 
-export function CoverageHeatmap({ entries, startDate, endDate, isLoading }: CoverageHeatmapProps) {
+export const CoverageHeatmap = memo(function CoverageHeatmap({ entries, startDate, endDate, isLoading }: CoverageHeatmapProps) {
   const [hovered, setHovered] = useState<{
     label: string;
     summary: string;
@@ -117,7 +118,7 @@ export function CoverageHeatmap({ entries, startDate, endDate, isLoading }: Cove
 
   if (isLoading) {
     return (
-      <div className="space-y-[3px]">
+      <div className="space-y-[3px]" role="status" aria-label="Cargando datos">
         {Array.from({ length: 10 }).map((_, i) => (
           <div key={i} className="skeleton h-6 rounded-[3px]" />
         ))}
@@ -129,8 +130,10 @@ export function CoverageHeatmap({ entries, startDate, endDate, isLoading }: Cove
     <div className="relative overflow-x-auto">
       <div
         className="grid gap-[3px]"
+        role="grid"
+        aria-label="Mapa de cobertura de datos"
         style={{
-          gridTemplateColumns: `100px repeat(${dates.length}, minmax(28px, 1fr))`,
+          gridTemplateColumns: `clamp(60px, 15vw, 100px) repeat(${dates.length}, minmax(20px, 1fr))`,
         }}
       >
         {/* Header row: dates */}
@@ -183,7 +186,7 @@ export function CoverageHeatmap({ entries, startDate, endDate, isLoading }: Cove
       {/* Legend */}
       <div className="flex gap-4 mt-4 font-body text-small text-text-muted">
         <span className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded-[2px] bg-[#2d5a3d]" />
+          <span className="inline-block w-3 h-3 rounded-[2px]" style={{ backgroundColor: dataPresent }} />
           Datos presentes
         </span>
         <span className="flex items-center gap-1.5">
@@ -197,7 +200,7 @@ export function CoverageHeatmap({ entries, startDate, endDate, isLoading }: Cove
       {/* Tooltip */}
       {hovered && (
         <div
-          className="fixed z-50 bg-bg-surface border border-bg-tertiary rounded-card px-3 py-2 shadow-lg pointer-events-none max-w-xs"
+          className="fixed z-50 bg-bg-surface border border-bg-tertiary rounded-card px-3 py-2 shadow-lg pointer-events-none max-w-[90vw]"
           style={{
             left: hovered.x,
             top: hovered.y - 8,
@@ -210,7 +213,7 @@ export function CoverageHeatmap({ entries, startDate, endDate, isLoading }: Cove
       )}
     </div>
   );
-}
+});
 
 function RowFragment({
   category,
@@ -238,21 +241,45 @@ function RowFragment({
         return (
           <div
             key={`${category.key}-${dateStr}`}
-            className={`h-6 rounded-[3px] transition-transform duration-150 hover:scale-[1.15] cursor-default ${
-              hasData ? "bg-[#2d5a3d]" : "bg-bg-tertiary"
+            role="gridcell"
+            tabIndex={hasData ? 0 : -1}
+            aria-label={`${category.label} — ${format(date, "d MMM", { locale: es })}: ${hasData ? "datos presentes" : "sin datos"}`}
+            className={`h-6 rounded-[3px] transition-transform duration-150 hover:scale-[1.15] cursor-default focus-visible:ring-2 focus-visible:ring-accent-info ${
+              hasData ? "" : "bg-bg-tertiary"
             }`}
+            style={hasData ? { backgroundColor: dataPresent } : undefined}
             onMouseEnter={(e) => {
               if (!entry || !hasData) return;
-              const rect = e.currentTarget.getBoundingClientRect();
-              const summary = buildTooltip(entry, category);
-              onHover({
-                label: `${category.label} — ${format(date, "d MMM", { locale: es })}`,
-                summary,
-                x: rect.left + rect.width / 2,
-                y: rect.top,
+              const target = e.currentTarget;
+              requestAnimationFrame(() => {
+                const rect = target.getBoundingClientRect();
+                const summary = buildTooltip(entry, category);
+                onHover({
+                  label: `${category.label} — ${format(date, "d MMM", { locale: es })}`,
+                  summary,
+                  x: rect.left + rect.width / 2,
+                  y: rect.top,
+                });
               });
             }}
             onMouseLeave={() => onHover(null)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (!entry || !hasData) return;
+                const target = e.currentTarget;
+                requestAnimationFrame(() => {
+                  const rect = target.getBoundingClientRect();
+                  const summary = buildTooltip(entry, category);
+                  onHover({
+                    label: `${category.label} — ${format(date, "d MMM", { locale: es })}`,
+                    summary,
+                    x: rect.left + rect.width / 2,
+                    y: rect.top,
+                  });
+                });
+              }
+            }}
           />
         );
       })}

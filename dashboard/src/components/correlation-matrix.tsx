@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { useRankings } from "@/hooks/use-analysis";
-import { accentColors } from "@/lib/design-tokens";
+import { accentColors, warningBgLight } from "@/lib/design-tokens";
 import { formatVariable } from "@/lib/utils";
 
 function SignificanceBadge({ significant }: { significant: boolean }) {
@@ -10,15 +10,15 @@ function SignificanceBadge({ significant }: { significant: boolean }) {
   return (
     <span
       className="inline-block px-1.5 py-0.5 rounded text-small font-body"
-      style={{ backgroundColor: "rgba(212, 160, 58, 0.15)", color: accentColors.warning }}
+      style={{ backgroundColor: warningBgLight, color: accentColors.warning }}
     >
       sig
     </span>
   );
 }
 
-export function CorrelationMatrix() {
-  const { data: rankings, isLoading, error } = useRankings();
+export const CorrelationMatrix = memo(function CorrelationMatrix() {
+  const { data: rankings, isLoading, error, refetch } = useRankings();
 
   const sorted = useMemo(
     () => [...(rankings ?? [])].sort((a, b) => Math.abs(b.coefficient) - Math.abs(a.coefficient)),
@@ -37,10 +37,16 @@ export function CorrelationMatrix() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center py-8">
+      <div className="flex flex-col items-center justify-center gap-3 py-8">
         <span className="font-body text-body text-text-muted">
-          Error loading correlations
+          No se pudieron cargar las correlaciones. Los datos est&aacute;n seguros.
         </span>
+        <button
+          onClick={() => refetch()}
+          className="font-body text-small text-accent-info hover:text-text-primary transition-colors"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -49,7 +55,7 @@ export function CorrelationMatrix() {
     return (
       <div className="flex items-center justify-center py-8">
         <span className="font-body text-body text-text-muted">
-          No correlation data available yet
+          A&uacute;n no hay datos de correlaci&oacute;n
         </span>
       </div>
     );
@@ -64,16 +70,20 @@ export function CorrelationMatrix() {
               Variable
             </th>
             <th className="text-right font-body text-label uppercase text-text-muted tracking-widest py-3 px-4">
-              Coefficient
+              <abbr title="Positivo (rojo) = se asocia con más dolor. Negativo (verde) = se asocia con menos dolor." className="no-underline cursor-help">
+                Coeficiente
+              </abbr>
             </th>
-            <th className="text-right font-body text-label uppercase text-text-muted tracking-widest py-3 px-4">
-              p-value
+            <th className="hidden sm:table-cell text-right font-body text-label uppercase text-text-muted tracking-widest py-3 px-4">
+              p-valor
             </th>
-            <th className="text-right font-body text-label uppercase text-text-muted tracking-widest py-3 px-4">
+            <th className="hidden sm:table-cell text-right font-body text-label uppercase text-text-muted tracking-widest py-3 px-4">
               n
             </th>
             <th className="text-center font-body text-label uppercase text-text-muted tracking-widest py-3 pl-4">
-              Sig
+              <abbr title="Significancia estadística (p < 0.05)" className="no-underline cursor-help">
+                Sig.
+              </abbr>
             </th>
           </tr>
         </thead>
@@ -103,14 +113,14 @@ export function CorrelationMatrix() {
                     {row.coefficient.toFixed(3)}
                   </span>
                 </td>
-                <td className="py-3 px-4 text-right">
+                <td className="hidden sm:table-cell py-3 px-4 text-right">
                   <span className="font-body text-small tabular-nums text-text-secondary">
                     {row.p_value < 0.001
                       ? "<0.001"
                       : row.p_value.toFixed(3)}
                   </span>
                 </td>
-                <td className="py-3 px-4 text-right">
+                <td className="hidden sm:table-cell py-3 px-4 text-right">
                   <span className="font-body text-small tabular-nums text-text-muted">
                     {row.n}
                   </span>
@@ -125,4 +135,4 @@ export function CorrelationMatrix() {
       </table>
     </div>
   );
-}
+});

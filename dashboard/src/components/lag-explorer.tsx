@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -12,7 +12,7 @@ import {
   Cell,
 } from "recharts";
 import { useLagCorrelation } from "@/hooks/use-analysis";
-import { accentColors, chartTickStyle, chartGridProps } from "@/lib/design-tokens";
+import { accentColors, chartTickStyle, chartGridProps, chartCursorOverlay } from "@/lib/design-tokens";
 import { formatVariable } from "@/lib/utils";
 
 const TARGET = "pain_max";
@@ -48,10 +48,10 @@ function LagTooltip({ active, payload }: LagTooltipProps) {
   return (
     <div className="bg-bg-surface border border-bg-tertiary rounded-card p-3 shadow-lg">
       <p className="font-body text-small text-text-secondary mb-1">
-        Lag {d.lag > 0 ? `+${d.lag}` : d.lag} days
+        Lag {d.lag > 0 ? `+${d.lag}` : d.lag} días
       </p>
       <p className="font-display text-body tabular-nums text-text-primary">
-        r = {d.coefficient !== null ? d.coefficient.toFixed(3) : "N/A"}
+        r = {d.coefficient !== null ? d.coefficient.toFixed(3) : "N/D"}
       </p>
       {d.p_value !== null && (
         <p className="font-body text-small text-text-muted">
@@ -63,24 +63,25 @@ function LagTooltip({ active, payload }: LagTooltipProps) {
   );
 }
 
-export function LagExplorer() {
+export const LagExplorer = memo(function LagExplorer() {
   const [variable, setVariable] = useState<string>(VARIABLES[0]);
 
-  const { data: lagData, isLoading, error } = useLagCorrelation(TARGET, variable);
+  const { data: lagData, isLoading, error, refetch } = useLagCorrelation(TARGET, variable);
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <label className="font-body text-small text-text-muted">
-          Target:
-          <span className="ml-1 text-text-secondary">Pain (max)</span>
+          Objetivo:
+          <span className="ml-1 text-text-secondary">Dolor (máx)</span>
         </label>
-        <label className="font-body text-small text-text-muted">
+        <label htmlFor="lag-variable" className="font-body text-small text-text-muted">
           vs
           <select
+            id="lag-variable"
             value={variable}
             onChange={(e) => setVariable(e.target.value)}
-            className="ml-2 bg-bg-tertiary text-text-primary font-body text-small rounded-md px-2 py-1 border border-bg-tertiary outline-none focus:border-accent-info"
+            className="ml-2 bg-bg-tertiary text-text-primary font-body text-small rounded-md px-2 py-2 sm:py-1 min-h-[44px] sm:min-h-0 border border-bg-tertiary outline-none focus-visible:ring-2 focus-visible:ring-accent-info"
           >
             {VARIABLES.map((v) => (
               <option key={v} value={v}>
@@ -99,14 +100,21 @@ export function LagExplorer() {
         )}
 
         {error && (
-          <div className="h-full flex items-center justify-center">
-            <span className="font-body text-body text-text-muted">
-              Error loading lag data
+          <div className="h-full flex flex-col items-center justify-center gap-3">
+            <span className="text-text-muted font-body text-body">
+              No se pudieron cargar los datos de desfase
             </span>
+            <button
+              onClick={() => refetch()}
+              className="font-body text-small text-accent-info hover:text-text-primary transition-colors"
+            >
+              Reintentar
+            </button>
           </div>
         )}
 
         {lagData && lagData.length > 0 && (
+          <div role="region" aria-label="Explorador de correlación con desfase temporal" className="h-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={lagData}
@@ -116,7 +124,7 @@ export function LagExplorer() {
               <XAxis
                 dataKey="lag"
                 tick={chartTickStyle}
-                axisLine={{ stroke: "#44403C" }}
+                axisLine={{ stroke: chartGridProps.stroke }}
                 tickLine={false}
                 tickFormatter={(v: number) => (v > 0 ? `+${v}` : String(v))}
               />
@@ -129,7 +137,7 @@ export function LagExplorer() {
               />
               <Tooltip
                 content={<LagTooltip />}
-                cursor={{ fill: "rgba(68, 64, 60, 0.2)" }}
+                cursor={{ fill: chartCursorOverlay }}
               />
               <Bar dataKey="coefficient" radius={[4, 4, 0, 0]}>
                 {lagData.map((entry, index) => (
@@ -138,7 +146,7 @@ export function LagExplorer() {
                     fill={
                       entry.significant
                         ? accentColors.highlight
-                        : "#78716C"
+                        : chartTickStyle.fill
                     }
                     fillOpacity={entry.significant ? 1 : 0.5}
                   />
@@ -146,16 +154,17 @@ export function LagExplorer() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          </div>
         )}
 
         {lagData && lagData.length === 0 && (
           <div className="h-full flex items-center justify-center">
-            <span className="font-body text-body text-text-muted">
-              No lag data available
+            <span className="text-text-muted font-body text-body">
+              Necesitas más registros para analizar correlaciones con desfase
             </span>
           </div>
         )}
       </div>
     </div>
   );
-}
+});

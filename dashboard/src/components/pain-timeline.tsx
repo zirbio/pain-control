@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import {
   ComposedChart,
   Line,
@@ -10,20 +10,21 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import type { DailyEntry } from "@/lib/api";
-import { chartTickStyle, chartGridProps } from "@/lib/design-tokens";
+import { accentColors, painScale, chartTickStyle, chartGridProps } from "@/lib/design-tokens";
 
 const LOCATION_COLORS: Record<string, string> = {
-  lower_back: "#C4512A",
-  left_knee: "#D4A03A",
-  knee: "#D4A03A",
-  shoulder: "#A8B86A",
-  neck: "#A8B86A",
+  lower_back: painScale[8],   // cinnabar
+  left_knee: painScale[5],    // amber
+  knee: painScale[5],         // amber
+  shoulder: painScale[3],     // sage-lime
+  neck: painScale[3],         // sage-lime
 };
 
-const DEFAULT_COLOR = "#7B9FBF";
+const DEFAULT_COLOR = accentColors.info;
 
 function getLocationColor(location: string): string {
   const normalized = location.toLowerCase();
@@ -52,7 +53,7 @@ function CustomTooltip({ active, payload }: {
   if (!data) return null;
 
   return (
-    <div className="bg-bg-surface border border-bg-tertiary rounded-card p-3 shadow-lg min-w-[180px]">
+    <div className="bg-bg-surface border border-bg-tertiary rounded-card p-3 shadow-lg min-w-[180px] max-w-[90vw]">
       <p className="font-body text-small text-text-secondary mb-2">
         {format(parseISO(data.date), "EEEE d MMM", { locale: es })}
       </p>
@@ -109,7 +110,7 @@ interface PainTimelineProps {
   entries: DailyEntry[];
 }
 
-export function PainTimeline({ entries }: PainTimelineProps) {
+export const PainTimeline = memo(function PainTimeline({ entries }: PainTimelineProps) {
   const { chartData, locations } = useMemo(() => {
     if (!entries.length) return { chartData: [], locations: new Set<string>() };
 
@@ -140,10 +141,16 @@ export function PainTimeline({ entries }: PainTimelineProps) {
 
   if (chartData.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center">
+      <div className="h-full flex flex-col items-center justify-center gap-2">
         <span className="text-text-muted font-body text-body">
-          Sin datos de dolor todavía
+          Añade tu primer registro de dolor para ver tendencias aquí
         </span>
+        <Link
+          href="/history"
+          className="font-body text-small text-accent-info hover:text-text-primary transition-colors"
+        >
+          Ver historial →
+        </Link>
       </div>
     );
   }
@@ -162,10 +169,11 @@ export function PainTimeline({ entries }: PainTimelineProps) {
     : 1020;
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <div role="region" aria-label="Línea temporal de dolor por localización" className="h-full">
+      <ResponsiveContainer width="100%" height="100%">
       <ComposedChart
         data={chartData}
-        margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
+        margin={{ top: 8, right: 8, bottom: 0, left: -8 }}
       >
         <defs>
           <linearGradient id="atmosphericBg" x1="0" y1="0" x2="1" y2="0">
@@ -201,7 +209,7 @@ export function PainTimeline({ entries }: PainTimelineProps) {
         <XAxis
           dataKey="dateLabel"
           tick={chartTickStyle}
-          axisLine={{ stroke: "#44403C" }}
+          axisLine={{ stroke: chartGridProps.stroke }}
           tickLine={false}
         />
         <YAxis
@@ -213,7 +221,7 @@ export function PainTimeline({ entries }: PainTimelineProps) {
         />
         <Tooltip
           content={<CustomTooltip />}
-          cursor={{ stroke: "#78716C", strokeDasharray: "3 3" }}
+          cursor={{ stroke: chartTickStyle.fill, strokeDasharray: "3 3" }}
         />
         {locationArray.map((loc) => (
           <Line
@@ -227,12 +235,13 @@ export function PainTimeline({ entries }: PainTimelineProps) {
               r: 4,
               stroke: getLocationColor(loc),
               strokeWidth: 2,
-              fill: "#1C1917",
+              fill: "var(--color-bg-primary)",
             }}
             connectNulls
           />
         ))}
       </ComposedChart>
-    </ResponsiveContainer>
+      </ResponsiveContainer>
+    </div>
   );
-}
+});

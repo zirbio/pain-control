@@ -31,12 +31,24 @@ export const accentColors = {
   highlight: "#D4A03A",
 } as const;
 
+export const textColors = {
+  primary: "#F5F5F4",
+  secondary: "#A8A29E",
+  muted: "#9a918a",
+} as const;
+
 /** Shared tick style for Recharts axes across all chart components. */
 export const chartTickStyle = {
-  fill: "#78716C",
+  fill: "#9a918a",
   fontSize: 11,
   fontFamily: "Satoshi, system-ui, sans-serif",
 } as const;
+
+export const chartCursorOverlay = "rgba(68, 64, 60, 0.2)";
+
+export const dataPresent = "#2d5a3d";
+
+export const warningBgLight = "rgba(212, 160, 58, 0.15)";
 
 /** Shared grid style for Recharts CartesianGrid. */
 export const chartGridProps = {

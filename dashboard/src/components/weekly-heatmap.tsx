@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import {
   format,
   parseISO,
@@ -20,7 +20,7 @@ interface WeeklyHeatmapProps {
 
 const DAY_LABELS = ["L", "M", "X", "J", "V", "S", "D"];
 
-export function WeeklyHeatmap({ entries, weeks = 5 }: WeeklyHeatmapProps) {
+export const WeeklyHeatmap = memo(function WeeklyHeatmap({ entries, weeks = 5 }: WeeklyHeatmapProps) {
   const [hoveredDay, setHoveredDay] = useState<{
     date: string;
     pain: number | null;
@@ -75,9 +75,9 @@ export function WeeklyHeatmap({ entries, weeks = 5 }: WeeklyHeatmapProps) {
 
   return (
     <div className="relative h-full flex flex-col">
-      <h3 className="font-body text-label uppercase text-text-muted tracking-widest mb-3">
-        Heatmap &middot; {weeks}s
-      </h3>
+      <h2 className="font-body text-label uppercase text-text-muted tracking-widest mb-3">
+        Mapa semanal
+      </h2>
 
       {/* Day labels */}
       <div className="grid grid-cols-7 gap-[3px] mb-1">
@@ -92,7 +92,7 @@ export function WeeklyHeatmap({ entries, weeks = 5 }: WeeklyHeatmapProps) {
       </div>
 
       {/* Grid */}
-      <div className="flex-1 grid grid-rows-5 gap-[3px]">
+      <div className="flex-1 grid grid-rows-5 gap-[3px]" role="grid" aria-label="Mapa de calor semanal de dolor">
         {grid.map((week, wi) => (
           <div key={wi} className="grid grid-cols-7 gap-[3px]">
             {week.map((day) => {
@@ -109,7 +109,10 @@ export function WeeklyHeatmap({ entries, weeks = 5 }: WeeklyHeatmapProps) {
               return (
                 <div
                   key={day.dateStr}
-                  className={`rounded-[4px] cursor-pointer transition-transform duration-150 hover:scale-[1.15] ${
+                  role="gridcell"
+                  tabIndex={0}
+                  aria-label={`${day.dateStr}: dolor ${day.pain !== null ? day.pain + '/10' : 'sin datos'}`}
+                  className={`rounded-[4px] cursor-pointer transition-transform duration-150 hover:scale-[1.15] focus-visible:ring-2 focus-visible:ring-accent-info focus-visible:ring-offset-1 ${
                     !hasPain
                       ? "border border-dashed border-bg-tertiary bg-bg-secondary"
                       : ""
@@ -120,15 +123,33 @@ export function WeeklyHeatmap({ entries, weeks = 5 }: WeeklyHeatmapProps) {
                       : undefined
                   }
                   onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setHoveredDay({
-                      date: day.dateStr,
-                      pain: day.pain,
-                      x: rect.left + rect.width / 2,
-                      y: rect.top,
+                    const target = e.currentTarget;
+                    requestAnimationFrame(() => {
+                      const rect = target.getBoundingClientRect();
+                      setHoveredDay({
+                        date: day.dateStr,
+                        pain: day.pain,
+                        x: rect.left + rect.width / 2,
+                        y: rect.top,
+                      });
                     });
                   }}
                   onMouseLeave={() => setHoveredDay(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      const target = e.currentTarget;
+                      requestAnimationFrame(() => {
+                        const rect = target.getBoundingClientRect();
+                        setHoveredDay({
+                          date: day.dateStr,
+                          pain: day.pain,
+                          x: rect.left + rect.width / 2,
+                          y: rect.top,
+                        });
+                      });
+                    }
+                  }}
                 />
               );
             })}
@@ -163,4 +184,4 @@ export function WeeklyHeatmap({ entries, weeks = 5 }: WeeklyHeatmapProps) {
       )}
     </div>
   );
-}
+});
