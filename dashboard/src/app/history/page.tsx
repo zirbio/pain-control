@@ -25,7 +25,7 @@ export default function HistoryPage() {
           </h1>
         </div>
 
-        {!entries?.length ? (
+        {entries !== undefined && !entries.length ? (
           <EmptyState variant="no-entries" />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
