@@ -9,6 +9,7 @@ import { NavBar } from "@/components/nav-bar";
 import { AlertsPanel } from "@/components/alerts-panel";
 import { useEntries } from "@/hooks/use-entries";
 import { average } from "@/lib/utils";
+import { EmptyState } from "@/components/empty-state";
 
 export default function DashboardPage() {
   const today = new Date();
@@ -63,13 +64,17 @@ export default function DashboardPage() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="skeleton h-32" />
             ))}
           </div>
+        ) : !entries?.length ? (
+          <div className="mb-8">
+            <EmptyState variant="no-entries" />
+          </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <MetricCard
               label="Dolor · 7d"
               value={avgPain}
@@ -96,10 +101,10 @@ export default function DashboardPage() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="md:col-span-2 bg-bg-secondary border border-bg-tertiary rounded-card p-4 h-80">
+          <div className="md:col-span-2 bg-bg-secondary border border-bg-tertiary rounded-card p-4 h-64 sm:h-72 md:h-80">
             <PainTimeline entries={entries ?? []} />
           </div>
-          <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-4 h-80">
+          <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-4 h-64 sm:h-72 md:h-80">
             <WeeklyHeatmap entries={heatmapEntries ?? []} />
           </div>
         </div>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="60" viewBox="0 0 280 60" fill="none">
+  <defs>
+    <filter id="brush" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+  <path d="M 28 8 C 12 10, 2 22, 4 34 C 6 46, 18 54, 30 54 C 42 54, 52 46, 54 34 C 56 22, 48 12, 38 9"
+    stroke="#D4A03A" stroke-width="3.5" stroke-linecap="round" fill="none" filter="url(#brush)"/>
+  <circle cx="28" cy="8" r="2.5" fill="#D4A03A" opacity="0.6"/>
+  <text x="76" y="28" fill="#F5F5F4" font-family="Newsreader, Georgia, serif" font-size="22" font-weight="500" letter-spacing="0.5">Pain Control</text>
+  <text x="76" y="46" fill="#A8A29E" font-family="Satoshi, system-ui, sans-serif" font-size="10" font-weight="400" letter-spacing="3">CHRONIC PAIN OBSERVATORY</text>
+</svg>

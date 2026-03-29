@@ -3,8 +3,22 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"),
   title: "Pain Control",
-  description: "Personal chronic pain tracking and pattern analysis",
+  description: "Chronic pain tracking and pattern analysis",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "16x16" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "Pain Control",
+    description: "Chronic pain tracking and pattern analysis",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -25,7 +39,15 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-bg-primary text-text-primary font-body antialiased">
-        <Providers>{children}</Providers>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-bg-secondary focus:text-text-primary focus:px-4 focus:py-2 focus:rounded-md"
+        >
+          Saltar al contenido
+        </a>
+        <Providers>
+          <div id="main-content">{children}</div>
+        </Providers>
       </body>
     </html>
   );
