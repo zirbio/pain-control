@@ -46,3 +46,4 @@ data/imports/*
 # Logs (keep dir, ignore files)
 data/logs/*
 !data/logs/.gitkeep
+.coverage

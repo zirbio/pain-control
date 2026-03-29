@@ -93,6 +93,8 @@ def build_daily_dataframe(
     for entry in entries:
         row: dict = {"date": entry.date}
 
+        row["stretching"] = int(entry.stretching) if entry.stretching is not None else None
+
         if entry.pain_records:
             intensities = [p.intensity for p in entry.pain_records]
             row["pain_max"] = max(intensities)
