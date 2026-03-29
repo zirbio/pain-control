@@ -63,7 +63,7 @@ def create_or_update_entry(
         response.status_code = 200
         return existing
 
-    entry = DailyEntry(date=data.date, stretching=data.stretching)
+    entry = DailyEntry(date=data.date)
     _populate_entry(entry, data)
     db.add(entry)
     db.commit()
