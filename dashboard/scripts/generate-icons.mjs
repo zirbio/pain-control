@@ -80,9 +80,14 @@ console.log("✓ favicon.ico (16×16 ICO wrapping PNG)");
 const ogSvg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
   <rect width="1200" height="630" fill="#1c1917"/>
   <defs>
-    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#292524" stroke-width="1"/>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#292524" stroke-width="1"/>
     </pattern>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#D4A03A" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#D4A03A" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#D4A03A" stop-opacity="0"/>
+    </linearGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#grid)" opacity="0.15"/>
   <g transform="translate(480, 235)">
@@ -92,7 +97,7 @@ const ogSvg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" 
   </g>
   <text x="552" y="290" fill="#F5F5F4" font-family="Georgia, serif" font-size="36" font-weight="500" letter-spacing="0.5">Pain Control</text>
   <text x="552" y="318" fill="#A8A29E" font-family="system-ui, sans-serif" font-size="12" font-weight="400" letter-spacing="4">CHRONIC PAIN OBSERVATORY</text>
-  <rect x="0" y="627" width="1200" height="3" fill="#D4A03A" opacity="0.4"/>
+  <rect x="0" y="627" width="1200" height="3" fill="url(#accent)" opacity="1"/>
 </svg>`);
 
 await sharp(ogSvg).png().toFile(resolve(publicDir, "og-image.png"));
