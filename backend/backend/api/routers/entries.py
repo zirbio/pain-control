@@ -7,44 +7,33 @@ from sqlalchemy.orm import Session, selectinload
 from backend.api.dependencies import get_db
 from backend.api.schemas import DailyEntryCreate, DailyEntryResponse
 from backend.db.models import (
-    ActivityRecord,
     DailyEntry,
     Extra,
     MedicationRecord,
-    MoodRecord,
-    NutritionRecord,
     PainRecord,
-    StressRecord,
 )
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
 
 
 def _populate_entry(entry: DailyEntry, data: DailyEntryCreate) -> None:
-    """Populate a DailyEntry with records from the create schema."""
+    """Populate a DailyEntry with data from the create schema."""
+    # Direct fields
     entry.stretching = data.stretching
+    entry.alcohol = data.alcohol
+    entry.heavy_dinner = data.heavy_dinner
+    entry.omega3 = data.omega3
+    entry.vitamin_d = data.vitamin_d
+    entry.magnesium = data.magnesium
+    entry.turmeric = data.turmeric
+    entry.mood_score = data.mood_score
+    entry.mood_emotions = json.dumps(data.mood_emotions) if data.mood_emotions else None
+    entry.stress_source = data.stress_source
+    entry.activity_pain_effect = data.activity_pain_effect
+
+    # Child records (1:N)
     entry.pain_records = [PainRecord(**r.model_dump()) for r in data.pain_records]
     entry.medication_records = [MedicationRecord(**r.model_dump()) for r in data.medication_records]
-    entry.mood_records = [
-        MoodRecord(
-            score=r.score,
-            emotions=json.dumps(r.emotions) if r.emotions else None,
-            notes=r.notes,
-        )
-        for r in data.mood_records
-    ]
-    entry.activity_records = [ActivityRecord(**r.model_dump()) for r in data.activity_records]
-    entry.stress_records = [StressRecord(**r.model_dump()) for r in data.stress_records]
-    entry.nutrition_records = [
-        NutritionRecord(
-            meals=json.dumps(r.meals) if r.meals else None,
-            alcohol=r.alcohol,
-            caffeine_cups=r.caffeine_cups,
-            water_liters=r.water_liters,
-            notes=r.notes,
-        )
-        for r in data.nutrition_records
-    ]
     entry.extras = [
         Extra(key=e.key, value=e.value, value_type=e.value_type, first_seen=data.date)
         for e in data.extras
@@ -90,10 +79,6 @@ def list_entries(
     query = db.query(DailyEntry).options(
         selectinload(DailyEntry.pain_records),
         selectinload(DailyEntry.medication_records),
-        selectinload(DailyEntry.mood_records),
-        selectinload(DailyEntry.activity_records),
-        selectinload(DailyEntry.stress_records),
-        selectinload(DailyEntry.nutrition_records),
         selectinload(DailyEntry.weather_records),
         selectinload(DailyEntry.apple_health_records),
         selectinload(DailyEntry.nutrition_import_records),
