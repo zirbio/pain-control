@@ -29,6 +29,26 @@ class DailyEntry(Base):
     )
     stretching: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
 
+    # Mood (promoted from MoodRecord)
+    mood_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    mood_emotions: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Stress (optional subjective annotation — level derived from HRV)
+    stress_source: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    # Activity impact (promoted from ActivityRecord)
+    activity_pain_effect: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
+    # Daily habits
+    alcohol: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    heavy_dinner: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+
+    # Supplements
+    omega3: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    vitamin_d: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    magnesium: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    turmeric: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+
     pain_records: Mapped[list["PainRecord"]] = relationship(
         back_populates="entry", cascade="all, delete-orphan"
     )
