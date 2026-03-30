@@ -40,12 +40,13 @@ def generate_report(
                 "max": round(float(sleep.max()), 1),
             }
 
-    if "activity_flag" in df.columns:
+    if "workout_count" in df.columns:
+        workout_days = int((df["workout_count"] > 0).sum())
         report["activity"] = {
-            "active_days": int(df["activity_flag"].sum()),
+            "active_days": workout_days,
             "total_days": len(df),
-            "mean_minutes": round(float(df["activity_minutes"].mean()), 0)
-            if "activity_minutes" in df.columns
+            "mean_minutes": round(float(df["workout_total_min"].mean()), 0)
+            if "workout_total_min" in df.columns
             else None,
         }
 

@@ -2,49 +2,43 @@ import datetime
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from backend.api.dependencies import get_db
 from backend.api.schemas import DailyEntryCreate, DailyEntryResponse
 from backend.db.models import (
-    ActivityRecord,
     DailyEntry,
     Extra,
     MedicationRecord,
-    MoodRecord,
-    NutritionRecord,
     PainRecord,
-    StressRecord,
+    eager_load_options,
 )
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
 
 
+_DIRECT_FIELDS = (
+    "stretching",
+    "alcohol",
+    "heavy_dinner",
+    "omega3",
+    "vitamin_d",
+    "magnesium",
+    "turmeric",
+    "mood_score",
+    "stress_source",
+    "activity_pain_effect",
+)
+
+
 def _populate_entry(entry: DailyEntry, data: DailyEntryCreate) -> None:
-    """Populate a DailyEntry with records from the create schema."""
-    entry.stretching = data.stretching
+    """Populate a DailyEntry with data from the create schema."""
+    for field in _DIRECT_FIELDS:
+        setattr(entry, field, getattr(data, field))
+    entry.mood_emotions = json.dumps(data.mood_emotions) if data.mood_emotions is not None else None
+
     entry.pain_records = [PainRecord(**r.model_dump()) for r in data.pain_records]
     entry.medication_records = [MedicationRecord(**r.model_dump()) for r in data.medication_records]
-    entry.mood_records = [
-        MoodRecord(
-            score=r.score,
-            emotions=json.dumps(r.emotions) if r.emotions else None,
-            notes=r.notes,
-        )
-        for r in data.mood_records
-    ]
-    entry.activity_records = [ActivityRecord(**r.model_dump()) for r in data.activity_records]
-    entry.stress_records = [StressRecord(**r.model_dump()) for r in data.stress_records]
-    entry.nutrition_records = [
-        NutritionRecord(
-            meals=json.dumps(r.meals) if r.meals else None,
-            alcohol=r.alcohol,
-            caffeine_cups=r.caffeine_cups,
-            water_liters=r.water_liters,
-            notes=r.notes,
-        )
-        for r in data.nutrition_records
-    ]
     entry.extras = [
         Extra(key=e.key, value=e.value, value_type=e.value_type, first_seen=data.date)
         for e in data.extras
@@ -74,7 +68,9 @@ def create_or_update_entry(
 
 @router.get("/{date}", response_model=DailyEntryResponse)
 def get_entry_by_date(date: datetime.date, db: Session = Depends(get_db)):
-    entry = db.query(DailyEntry).filter(DailyEntry.date == date).first()
+    entry = (
+        db.query(DailyEntry).options(*eager_load_options()).filter(DailyEntry.date == date).first()
+    )
     if not entry:
         raise HTTPException(status_code=404, detail=f"No entry for {date}")
     return entry
@@ -87,19 +83,7 @@ def list_entries(
     limit: int = Query(default=90, ge=1, le=365),
     db: Session = Depends(get_db),
 ):
-    query = db.query(DailyEntry).options(
-        selectinload(DailyEntry.pain_records),
-        selectinload(DailyEntry.medication_records),
-        selectinload(DailyEntry.mood_records),
-        selectinload(DailyEntry.activity_records),
-        selectinload(DailyEntry.stress_records),
-        selectinload(DailyEntry.nutrition_records),
-        selectinload(DailyEntry.weather_records),
-        selectinload(DailyEntry.apple_health_records),
-        selectinload(DailyEntry.nutrition_import_records),
-        selectinload(DailyEntry.workout_records),
-        selectinload(DailyEntry.extras),
-    )
+    query = db.query(DailyEntry).options(*eager_load_options())
     if start_date:
         query = query.filter(DailyEntry.date >= start_date)
     if end_date:

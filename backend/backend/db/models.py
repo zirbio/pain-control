@@ -29,22 +29,30 @@ class DailyEntry(Base):
     )
     stretching: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
 
+    # Mood (promoted from MoodRecord)
+    mood_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    mood_emotions: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Stress (optional subjective annotation — level derived from HRV)
+    stress_source: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+    # Activity impact (promoted from ActivityRecord)
+    activity_pain_effect: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
+    # Daily habits
+    alcohol: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    heavy_dinner: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+
+    # Supplements
+    omega3: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    vitamin_d: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    magnesium: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    turmeric: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+
     pain_records: Mapped[list["PainRecord"]] = relationship(
         back_populates="entry", cascade="all, delete-orphan"
     )
     medication_records: Mapped[list["MedicationRecord"]] = relationship(
-        back_populates="entry", cascade="all, delete-orphan"
-    )
-    mood_records: Mapped[list["MoodRecord"]] = relationship(
-        back_populates="entry", cascade="all, delete-orphan"
-    )
-    activity_records: Mapped[list["ActivityRecord"]] = relationship(
-        back_populates="entry", cascade="all, delete-orphan"
-    )
-    stress_records: Mapped[list["StressRecord"]] = relationship(
-        back_populates="entry", cascade="all, delete-orphan"
-    )
-    nutrition_records: Mapped[list["NutritionRecord"]] = relationship(
         back_populates="entry", cascade="all, delete-orphan"
     )
     weather_records: Mapped[list["WeatherRecord"]] = relationship(
@@ -93,65 +101,6 @@ class MedicationRecord(Base):
     effectiveness: Mapped[int | None] = mapped_column(Integer)
 
     entry: Mapped["DailyEntry"] = relationship(back_populates="medication_records")
-
-
-class MoodRecord(Base):
-    __tablename__ = "mood_records"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(
-        ForeignKey("daily_entries.id"), nullable=False, index=True
-    )
-    score: Mapped[int] = mapped_column(Integer, nullable=False)
-    emotions: Mapped[str | None] = mapped_column(Text)  # JSON string
-    notes: Mapped[str | None] = mapped_column(Text)
-
-    entry: Mapped["DailyEntry"] = relationship(back_populates="mood_records")
-
-
-class ActivityRecord(Base):
-    __tablename__ = "activity_records"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(
-        ForeignKey("daily_entries.id"), nullable=False, index=True
-    )
-    type: Mapped[str] = mapped_column(String(50), nullable=False)
-    duration_min: Mapped[int | None] = mapped_column(Integer)
-    pain_effect: Mapped[str | None] = mapped_column(String(20))
-    notes: Mapped[str | None] = mapped_column(Text)
-
-    entry: Mapped["DailyEntry"] = relationship(back_populates="activity_records")
-
-
-class StressRecord(Base):
-    __tablename__ = "stress_records"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(
-        ForeignKey("daily_entries.id"), nullable=False, index=True
-    )
-    level: Mapped[int] = mapped_column(Integer, nullable=False)
-    source: Mapped[str | None] = mapped_column(String(50))
-    notes: Mapped[str | None] = mapped_column(Text)
-
-    entry: Mapped["DailyEntry"] = relationship(back_populates="stress_records")
-
-
-class NutritionRecord(Base):
-    __tablename__ = "nutrition_records"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    entry_id: Mapped[int] = mapped_column(
-        ForeignKey("daily_entries.id"), nullable=False, index=True
-    )
-    meals: Mapped[str | None] = mapped_column(Text)  # JSON string
-    alcohol: Mapped[bool | None] = mapped_column(Boolean)
-    caffeine_cups: Mapped[int | None] = mapped_column(Integer)
-    water_liters: Mapped[float | None] = mapped_column(Float)
-    notes: Mapped[str | None] = mapped_column(Text)
-
-    entry: Mapped["DailyEntry"] = relationship(back_populates="nutrition_records")
 
 
 class WeatherRecord(Base):
@@ -290,6 +239,24 @@ class Extra(Base):
     first_seen: Mapped[datetime.date | None] = mapped_column(Date)
 
     entry: Mapped["DailyEntry"] = relationship(back_populates="extras")
+
+
+def eager_load_options():
+    """Selectinload options for all DailyEntry child relationships.
+
+    Used by entries router and analysis module to avoid N+1 queries.
+    """
+    from sqlalchemy.orm import selectinload
+
+    return (
+        selectinload(DailyEntry.pain_records),
+        selectinload(DailyEntry.medication_records),
+        selectinload(DailyEntry.weather_records),
+        selectinload(DailyEntry.apple_health_records),
+        selectinload(DailyEntry.nutrition_import_records),
+        selectinload(DailyEntry.workout_records),
+        selectinload(DailyEntry.extras),
+    )
 
 
 class SchemaField(Base):

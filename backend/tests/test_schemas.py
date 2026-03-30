@@ -4,14 +4,10 @@ import pytest
 from pydantic import ValidationError
 
 from backend.api.schemas import (
-    ActivityRecordCreate,
     DailyEntryCreate,
     ExtraCreate,
     MedicationRecordCreate,
-    MoodRecordCreate,
-    NutritionRecordCreate,
     PainRecordCreate,
-    StressRecordCreate,
 )
 
 
@@ -30,53 +26,89 @@ def test_pain_record_intensity_out_of_range():
         PainRecordCreate(location="lumbar", intensity=-1)
 
 
+def _base_entry(**overrides):
+    """Minimal valid DailyEntryCreate with all required fields."""
+    defaults = {
+        "date": datetime.date(2026, 3, 27),
+        "stretching": False,
+        "alcohol": False,
+        "heavy_dinner": False,
+        "omega3": False,
+        "vitamin_d": False,
+        "magnesium": False,
+        "turmeric": False,
+        "mood_score": 5,
+    }
+    defaults.update(overrides)
+    return DailyEntryCreate(**defaults)
+
+
 def test_daily_entry_create_minimal():
-    entry = DailyEntryCreate(
-        date=datetime.date(2026, 3, 27),
-        stretching=False,
+    entry = _base_entry(
         pain_records=[PainRecordCreate(location="lumbar", intensity=5)],
     )
     assert entry.date == datetime.date(2026, 3, 27)
     assert entry.stretching is False
+    assert entry.mood_score == 5
     assert len(entry.pain_records) == 1
 
 
-def test_daily_entry_create_missing_stretching():
+def test_daily_entry_create_missing_mood_score():
     with pytest.raises(ValidationError):
         DailyEntryCreate(
             date=datetime.date(2026, 3, 27),
-            pain_records=[PainRecordCreate(location="lumbar", intensity=5)],
+            stretching=True,
+            alcohol=False,
+            heavy_dinner=False,
+            omega3=False,
+            vitamin_d=False,
+            magnesium=False,
+            turmeric=False,
+        )
+
+
+def test_daily_entry_create_missing_habits():
+    with pytest.raises(ValidationError):
+        DailyEntryCreate(
+            date=datetime.date(2026, 3, 27),
+            stretching=True,
+            mood_score=5,
         )
 
 
 def test_daily_entry_create_full():
-    entry = DailyEntryCreate(
-        date=datetime.date(2026, 3, 27),
+    entry = _base_entry(
         stretching=True,
+        alcohol=True,
+        heavy_dinner=False,
+        omega3=True,
+        vitamin_d=True,
+        magnesium=True,
+        turmeric=False,
+        mood_score=6,
+        mood_emotions=["cansancio", "tranquilidad"],
+        stress_source="laboral",
+        activity_pain_effect="mejoró",
         pain_records=[PainRecordCreate(location="lumbar", intensity=5)],
         medication_records=[
             MedicationRecordCreate(
                 name="Ibuprofen", dose="75mg", time_taken="08:00", effectiveness=7
             )
         ],
-        mood_records=[MoodRecordCreate(score=6, emotions=["cansancio"])],
-        activity_records=[
-            ActivityRecordCreate(type="caminata", duration_min=30, pain_effect="mejoró")
-        ],
-        stress_records=[StressRecordCreate(level=7, source="laboral")],
-        nutrition_records=[NutritionRecordCreate(alcohol=True, caffeine_cups=2)],
         extras=[ExtraCreate(key="rigidez_matutina", value="7", value_type="integer")],
     )
     assert entry.stretching is True
+    assert entry.mood_score == 6
+    assert entry.alcohol is True
+    assert entry.omega3 is True
     assert len(entry.medication_records) == 1
-    assert entry.nutrition_records[0].alcohol is True
 
 
 def test_mood_score_out_of_range():
     with pytest.raises(ValidationError):
-        MoodRecordCreate(score=0)
+        _base_entry(mood_score=0)
     with pytest.raises(ValidationError):
-        MoodRecordCreate(score=11)
+        _base_entry(mood_score=11)
 
 
 def test_extra_create():
@@ -86,7 +118,6 @@ def test_extra_create():
 
 
 def test_pain_record_boundary_values():
-    """Boundary values 0 and 10 should be accepted."""
     record_min = PainRecordCreate(location="lumbar", intensity=0)
     assert record_min.intensity == 0
     record_max = PainRecordCreate(location="lumbar", intensity=10)
@@ -94,8 +125,7 @@ def test_pain_record_boundary_values():
 
 
 def test_mood_score_boundary_values():
-    """Boundary values 1 and 10 should be accepted."""
-    mood_min = MoodRecordCreate(score=1)
-    assert mood_min.score == 1
-    mood_max = MoodRecordCreate(score=10)
-    assert mood_max.score == 10
+    entry_min = _base_entry(mood_score=1)
+    assert entry_min.mood_score == 1
+    entry_max = _base_entry(mood_score=10)
+    assert entry_max.mood_score == 10

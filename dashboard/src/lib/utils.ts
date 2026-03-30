@@ -12,7 +12,7 @@ export function cn(...inputs: ClassValue[]) {
 const VARIABLE_LABELS: Record<string, string> = {
   sleep_hours: "Horas de sueño",
   steps: "Pasos",
-  stress_level: "Nivel de estrés",
+  stress_proxy: "Estrés (HRV)",
   resting_heart_rate: "FC en reposo",
   resting_hr: "FC en reposo",
   hrv: "VFC (HRV)",
@@ -22,7 +22,8 @@ const VARIABLE_LABELS: Record<string, string> = {
   medication_effectiveness: "Eficacia medicación",
   mood_score: "Ánimo",
   activity_pain_effect: "Efecto actividad",
-  activity_minutes: "Minutos actividad",
+  workout_total_min: "Minutos entreno",
+  workout_count: "Entrenos",
   weather_pressure: "Presión atmosférica",
   pressure_hpa: "Presión (hPa)",
   pressure_change_hpa: "Cambio presión (hPa)",
@@ -30,7 +31,13 @@ const VARIABLE_LABELS: Record<string, string> = {
   weather_humidity: "Humedad",
   humidity_pct: "Humedad (%)",
   alcohol: "Alcohol",
-  caffeine_cups: "Cafés",
+  caffeine_mg: "Cafeína (mg)",
+  stretching: "Stretching",
+  heavy_dinner: "Cena copiosa",
+  omega3: "Omega 3",
+  vitamin_d: "Vitamina D",
+  magnesium: "Magnesio",
+  turmeric: "Cúrcuma",
   pain_max: "Dolor (máx)",
 };
 

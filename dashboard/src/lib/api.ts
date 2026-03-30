@@ -88,6 +88,14 @@ export interface NutritionImportRecord {
   niacin_mg: number | null;
 }
 
+export interface MedicationRecord {
+  id: number;
+  name: string;
+  dose: string | null;
+  time_taken: string | null;
+  effectiveness: number | null;
+}
+
 export interface WorkoutRecord {
   id: number;
   workout_type: string;
@@ -102,41 +110,43 @@ export interface WorkoutRecord {
   steps: number | null;
 }
 
+export interface ExtraRecord {
+  id: number;
+  key: string;
+  value: string;
+  value_type: string;
+  first_seen: string | null;
+}
+
 export interface DailyEntry {
   id: number;
   date: string;
   created_at: string;
   updated_at: string;
+
+  // Direct fields
+  stretching: boolean | null;
+  alcohol: boolean | null;
+  heavy_dinner: boolean | null;
+  omega3: boolean | null;
+  vitamin_d: boolean | null;
+  magnesium: boolean | null;
+  turmeric: boolean | null;
+  mood_score: number | null;
+  mood_emotions: string | null;
+  stress_source: string | null;
+  activity_pain_effect: string | null;
+
+  // Child records (1:N)
   pain_records: PainRecord[];
-  medication_records: Array<{
-    id: number;
-    name: string;
-    dose: string | null;
-    time_taken: string | null;
-    effectiveness: number | null;
-  }>;
-  mood_records: Array<{ id: number; score: number; emotions: string | null; notes: string | null }>;
-  activity_records: Array<{
-    id: number;
-    type: string;
-    duration_min: number | null;
-    pain_effect: string | null;
-    notes: string | null;
-  }>;
-  stress_records: Array<{ id: number; level: number; source: string | null; notes: string | null }>;
-  nutrition_records: Array<{
-    id: number;
-    meals: string | null;
-    alcohol: boolean | null;
-    caffeine_cups: number | null;
-    water_liters: number | null;
-    notes: string | null;
-  }>;
+  medication_records: MedicationRecord[];
+
+  // Auto-imported
   weather_records: WeatherRecord[];
   apple_health_records: AppleHealthRecord[];
   nutrition_import_records: NutritionImportRecord[];
   workout_records: WorkoutRecord[];
-  extras: Array<{ id: number; key: string; value: string; value_type: string; first_seen: string | null }>;
+  extras: ExtraRecord[];
 }
 
 export interface CorrelationResult {
