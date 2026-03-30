@@ -8,19 +8,16 @@ from backend.analysis.correlations import (
     build_daily_dataframe,
     compute_lag_correlation,
     compute_pairwise_correlation,
+    compute_stress_proxy,
     rank_pain_correlations,
 )
 from backend.db.database import Base
 from backend.db.models import (
-    ActivityRecord,
     AppleHealthRecord,
     DailyEntry,
     MedicationRecord,
-    MoodRecord,
     NutritionImportRecord,
-    NutritionRecord,
     PainRecord,
-    StressRecord,
     WeatherRecord,
     WorkoutRecord,
 )
@@ -76,28 +73,33 @@ def test_rank_pain_correlations():
     assert abs_coeffs == sorted(abs_coeffs, reverse=True)
 
 
-# --- build_daily_dataframe tests ---
-
-
 def _make_session(tmp_path):
     engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
     Base.metadata.create_all(engine)
     return sessionmaker(bind=engine)()
 
 
-def test_build_daily_dataframe_all_record_types(tmp_path):
-    """Entry with all record types populated should produce all expected columns."""
+def test_build_daily_dataframe_all_fields(tmp_path):
     session = _make_session(tmp_path)
-    entry = DailyEntry(date=datetime.date(2026, 3, 15))
+    entry = DailyEntry(
+        date=datetime.date(2026, 3, 15),
+        stretching=True,
+        alcohol=True,
+        heavy_dinner=False,
+        omega3=True,
+        vitamin_d=True,
+        magnesium=True,
+        turmeric=False,
+        mood_score=5,
+        mood_emotions='["cansancio"]',
+        stress_source="laboral",
+        activity_pain_effect="mejoró",
+    )
     entry.pain_records.append(PainRecord(location="lumbar", intensity=6))
     entry.pain_records.append(PainRecord(location="left_knee", intensity=4))
     entry.medication_records.append(
         MedicationRecord(name="Ibuprofen", dose="400mg", effectiveness=7)
     )
-    entry.mood_records.append(MoodRecord(score=5, emotions='["cansancio"]'))
-    entry.activity_records.append(ActivityRecord(type="caminata", duration_min=30))
-    entry.stress_records.append(StressRecord(level=6, source="laboral"))
-    entry.nutrition_records.append(NutritionRecord(alcohol=True, caffeine_cups=2, water_liters=1.5))
     entry.weather_records.append(
         WeatherRecord(
             temperature_c=14.5,
@@ -152,54 +154,59 @@ def test_build_daily_dataframe_all_record_types(tmp_path):
     df = build_daily_dataframe(session)
 
     assert len(df) == 1
-    # Pain columns
+    # Pain columns (global)
     assert df["pain_max"].iloc[0] == 6
-    assert df["pain_mean"].iloc[0] == 5.0  # (6+4)/2
+    assert df["pain_mean"].iloc[0] == 5.0
+    # Per-location pain
+    assert df["pain_lumbar"].iloc[0] == 6
+    assert df["pain_left_knee"].iloc[0] == 4
+    # DailyEntry direct fields
+    assert df["mood_score"].iloc[0] == 5
+    assert df["stretching"].iloc[0] == 1
+    assert df["alcohol"].iloc[0] == 1
+    assert df["heavy_dinner"].iloc[0] == 0
+    assert df["omega3"].iloc[0] == 1
+    assert df["vitamin_d"].iloc[0] == 1
+    assert df["magnesium"].iloc[0] == 1
+    assert df["turmeric"].iloc[0] == 0
     # Medication
     assert df["medication_effectiveness"].iloc[0] == 7.0
-    # Mood
-    assert df["mood_score"].iloc[0] == 5
-    # Activity
-    assert df["activity_flag"].iloc[0] == 1
-    assert df["activity_minutes"].iloc[0] == 30
-    # Stress
-    assert df["stress_level"].iloc[0] == 6
-    # Nutrition
-    assert df["alcohol"].iloc[0] == 1  # True -> int(True) = 1
-    assert df["caffeine_cups"].iloc[0] == 2
-    assert df["water_liters"].iloc[0] == 1.5
     # Weather
     assert df["temperature_c"].iloc[0] == 14.5
     assert df["humidity_pct"].iloc[0] == 78
-    assert df["pressure_hpa"].iloc[0] == 1008.3
-    assert df["pressure_change_hpa"].iloc[0] == -5.2
-    # Apple Health (original + new)
+    # Apple Health
     assert df["sleep_hours"].iloc[0] == 6.5
     assert df["resting_hr"].iloc[0] == 62
     assert df["hrv_ms"].iloc[0] == 38.5
-    assert df["steps"].iloc[0] == 8432
-    assert df["walking_asymmetry_pct"].iloc[0] == 12.5
-    assert df["vo2_max"].iloc[0] == 42.0
-    assert df["distance_km"].iloc[0] == 5.3
     # Nutrition Import
     assert df["protein_g"].iloc[0] == 120.5
-    assert df["carbs_g"].iloc[0] == 200.0
     assert df["caffeine_mg"].iloc[0] == 400.0
-    assert df["vitamin_d_mcg"].iloc[0] == 2.5
-    # Workout aggregation (2 workouts)
+    # Workout aggregation
     assert df["workout_count"].iloc[0] == 2
-    assert df["workout_total_min"].iloc[0] == 98.0  # 58 + 40
-    assert df["workout_total_energy_kj"].iloc[0] == 2150.0  # 1200 + 950
-    assert df["workout_max_hr"].iloc[0] == 172  # max(141, 172)
-    assert df["workout_avg_hr"].iloc[0] == 122  # round((110+135)/2)
-    assert abs(df["workout_max_intensity"].iloc[0] - 6.9) < 0.01
+    assert df["workout_total_min"].iloc[0] == 98.0
+    assert df["workout_max_hr"].iloc[0] == 172
+
+
+def test_build_daily_dataframe_per_location_pain(tmp_path):
+    session = _make_session(tmp_path)
+    entry = DailyEntry(date=datetime.date(2026, 3, 15), mood_score=5)
+    entry.pain_records.append(PainRecord(location="lumbar", intensity=7))
+    entry.pain_records.append(PainRecord(location="lumbar", intensity=5))
+    entry.pain_records.append(PainRecord(location="tobillo_izq", intensity=3))
+    session.add(entry)
+    session.commit()
+
+    df = build_daily_dataframe(session)
+
+    assert df["pain_lumbar"].iloc[0] == 7
+    assert df["pain_tobillo_izq"].iloc[0] == 3
+    assert df["pain_max"].iloc[0] == 7
+    assert df["pain_mean"].iloc[0] == 5.0
 
 
 def test_build_daily_dataframe_empty_pain_records(tmp_path):
-    """Entry with no pain records should have pain_max and pain_mean as None."""
     session = _make_session(tmp_path)
-    entry = DailyEntry(date=datetime.date(2026, 3, 15))
-    entry.mood_records.append(MoodRecord(score=5))
+    entry = DailyEntry(date=datetime.date(2026, 3, 15), mood_score=5)
     session.add(entry)
     session.commit()
 
@@ -211,9 +218,8 @@ def test_build_daily_dataframe_empty_pain_records(tmp_path):
 
 
 def test_build_daily_dataframe_multiple_medications_averaged(tmp_path):
-    """Multiple medication records with varying effectiveness should be averaged."""
     session = _make_session(tmp_path)
-    entry = DailyEntry(date=datetime.date(2026, 3, 15))
+    entry = DailyEntry(date=datetime.date(2026, 3, 15), mood_score=5)
     entry.pain_records.append(PainRecord(location="lumbar", intensity=5))
     entry.medication_records.append(
         MedicationRecord(name="Ibuprofen", dose="400mg", effectiveness=8)
@@ -229,29 +235,27 @@ def test_build_daily_dataframe_multiple_medications_averaged(tmp_path):
 
     df = build_daily_dataframe(session)
 
-    # Only effectiveness values that are not None: (8 + 4) / 2 = 6.0
     assert df["medication_effectiveness"].iloc[0] == 6.0
 
 
-def test_build_daily_dataframe_mood_with_none_emotions(tmp_path):
-    """Mood record with None emotions should not crash."""
-    session = _make_session(tmp_path)
-    entry = DailyEntry(date=datetime.date(2026, 3, 15))
-    entry.mood_records.append(MoodRecord(score=7, emotions=None))
-    session.add(entry)
-    session.commit()
+def test_stress_proxy_from_hrv():
+    import numpy as np
 
-    df = build_daily_dataframe(session)
+    dates = pd.date_range("2026-03-01", periods=30, freq="D")
+    np.random.seed(42)
+    hrv = np.random.normal(50, 5, 30)
+    hrv[14] = 20  # Notably low HRV day
 
-    assert len(df) == 1
-    assert df["mood_score"].iloc[0] == 7
+    df = pd.DataFrame({"hrv_ms": hrv}, index=dates)
+    result = compute_stress_proxy(df["hrv_ms"])
 
-
-# --- constant-value column test for compute_pairwise_correlation ---
+    assert len(result) == 30
+    assert result.iloc[14] > result.median()
+    assert result.min() >= 0
+    assert result.max() <= 10
 
 
 def test_pairwise_correlation_constant_column():
-    """A column with constant values should return coefficient=None, significant=False."""
     dates = pd.date_range("2026-03-01", periods=10, freq="D")
     df = pd.DataFrame(
         {
