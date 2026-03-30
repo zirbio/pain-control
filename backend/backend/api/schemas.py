@@ -20,33 +20,6 @@ class MedicationRecordCreate(BaseModel):
     effectiveness: int | None = Field(default=None, ge=0, le=10)
 
 
-class MoodRecordCreate(BaseModel):
-    score: int = Field(ge=1, le=10)
-    emotions: list[str] | None = None
-    notes: str | None = None
-
-
-class ActivityRecordCreate(BaseModel):
-    type: str
-    duration_min: int | None = None
-    pain_effect: str | None = None
-    notes: str | None = None
-
-
-class StressRecordCreate(BaseModel):
-    level: int = Field(ge=1, le=10)
-    source: str | None = None
-    notes: str | None = None
-
-
-class NutritionRecordCreate(BaseModel):
-    meals: list[dict] | None = None
-    alcohol: bool | None = None
-    caffeine_cups: int | None = None
-    water_liters: float | None = None
-    notes: str | None = None
-
-
 class ExtraCreate(BaseModel):
     key: str
     value: str
@@ -55,13 +28,29 @@ class ExtraCreate(BaseModel):
 
 class DailyEntryCreate(BaseModel):
     date: datetime.date
+
+    # Daily habits (all required)
     stretching: bool
+    alcohol: bool
+    heavy_dinner: bool
+
+    # Supplements (all required)
+    omega3: bool
+    vitamin_d: bool
+    magnesium: bool
+    turmeric: bool
+
+    # Mood (required)
+    mood_score: int = Field(ge=1, le=10)
+    mood_emotions: list[str] | None = None
+
+    # Optional subjective fields
+    stress_source: str | None = None
+    activity_pain_effect: str | None = None
+
+    # Child records (1:N)
     pain_records: list[PainRecordCreate] = []
     medication_records: list[MedicationRecordCreate] = []
-    mood_records: list[MoodRecordCreate] = []
-    activity_records: list[ActivityRecordCreate] = []
-    stress_records: list[StressRecordCreate] = []
-    nutrition_records: list[NutritionRecordCreate] = []
     extras: list[ExtraCreate] = []
 
 
@@ -85,45 +74,6 @@ class MedicationRecordResponse(BaseModel):
     dose: str | None
     time_taken: str | None
     effectiveness: int | None
-
-    model_config = {"from_attributes": True}
-
-
-class MoodRecordResponse(BaseModel):
-    id: int
-    score: int
-    emotions: str | None
-    notes: str | None
-
-    model_config = {"from_attributes": True}
-
-
-class ActivityRecordResponse(BaseModel):
-    id: int
-    type: str
-    duration_min: int | None
-    pain_effect: str | None
-    notes: str | None
-
-    model_config = {"from_attributes": True}
-
-
-class StressRecordResponse(BaseModel):
-    id: int
-    level: int
-    source: str | None
-    notes: str | None
-
-    model_config = {"from_attributes": True}
-
-
-class NutritionRecordResponse(BaseModel):
-    id: int
-    meals: str | None
-    alcohol: bool | None
-    caffeine_cups: int | None
-    water_liters: float | None
-    notes: str | None
 
     model_config = {"from_attributes": True}
 
@@ -231,15 +181,27 @@ class WorkoutRecordResponse(BaseModel):
 class DailyEntryResponse(BaseModel):
     id: int
     date: datetime.date
-    stretching: bool | None = None
     created_at: datetime.datetime
     updated_at: datetime.datetime
+
+    # Direct fields
+    stretching: bool | None = None
+    alcohol: bool | None = None
+    heavy_dinner: bool | None = None
+    omega3: bool | None = None
+    vitamin_d: bool | None = None
+    magnesium: bool | None = None
+    turmeric: bool | None = None
+    mood_score: int | None = None
+    mood_emotions: str | None = None
+    stress_source: str | None = None
+    activity_pain_effect: str | None = None
+
+    # Child records (1:N)
     pain_records: list[PainRecordResponse]
     medication_records: list[MedicationRecordResponse]
-    mood_records: list[MoodRecordResponse]
-    activity_records: list[ActivityRecordResponse]
-    stress_records: list[StressRecordResponse]
-    nutrition_records: list[NutritionRecordResponse]
+
+    # Auto-imported
     weather_records: list[WeatherRecordResponse]
     apple_health_records: list[AppleHealthRecordResponse]
     nutrition_import_records: list[NutritionImportRecordResponse] = []
