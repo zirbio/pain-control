@@ -88,6 +88,14 @@ export interface NutritionImportRecord {
   niacin_mg: number | null;
 }
 
+export interface MedicationRecord {
+  id: number;
+  name: string;
+  dose: string | null;
+  time_taken: string | null;
+  effectiveness: number | null;
+}
+
 export interface WorkoutRecord {
   id: number;
   workout_type: string;
@@ -100,6 +108,14 @@ export interface WorkoutRecord {
   avg_hr: number | null;
   distance_km: number | null;
   steps: number | null;
+}
+
+export interface ExtraRecord {
+  id: number;
+  key: string;
+  value: string;
+  value_type: string;
+  first_seen: string | null;
 }
 
 export interface DailyEntry {
@@ -123,20 +139,14 @@ export interface DailyEntry {
 
   // Child records (1:N)
   pain_records: PainRecord[];
-  medication_records: Array<{
-    id: number;
-    name: string;
-    dose: string | null;
-    time_taken: string | null;
-    effectiveness: number | null;
-  }>;
+  medication_records: MedicationRecord[];
 
   // Auto-imported
   weather_records: WeatherRecord[];
   apple_health_records: AppleHealthRecord[];
   nutrition_import_records: NutritionImportRecord[];
   workout_records: WorkoutRecord[];
-  extras: Array<{ id: number; key: string; value: string; value_type: string; first_seen: string | null }>;
+  extras: ExtraRecord[];
 }
 
 export interface CorrelationResult {

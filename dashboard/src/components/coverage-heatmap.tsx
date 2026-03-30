@@ -214,6 +214,24 @@ export const CoverageHeatmap = memo(function CoverageHeatmap({ entries, startDat
   );
 });
 
+function showTooltip(
+  target: HTMLElement,
+  entry: DailyEntry,
+  category: CategoryDef,
+  date: Date,
+  onHover: (h: { label: string; summary: string; x: number; y: number }) => void,
+): void {
+  requestAnimationFrame(() => {
+    const rect = target.getBoundingClientRect();
+    onHover({
+      label: `${category.label} — ${format(date, "d MMM", { locale: es })}`,
+      summary: buildTooltip(entry, category),
+      x: rect.left + rect.width / 2,
+      y: rect.top,
+    });
+  });
+}
+
 function RowFragment({
   category,
   dates,
@@ -248,35 +266,13 @@ function RowFragment({
             }`}
             style={hasData ? { backgroundColor: dataPresent } : undefined}
             onMouseEnter={(e) => {
-              if (!entry || !hasData) return;
-              const target = e.currentTarget;
-              requestAnimationFrame(() => {
-                const rect = target.getBoundingClientRect();
-                const summary = buildTooltip(entry, category);
-                onHover({
-                  label: `${category.label} — ${format(date, "d MMM", { locale: es })}`,
-                  summary,
-                  x: rect.left + rect.width / 2,
-                  y: rect.top,
-                });
-              });
+              if (entry && hasData) showTooltip(e.currentTarget, entry, category, date, onHover);
             }}
             onMouseLeave={() => onHover(null)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
+              if ((e.key === 'Enter' || e.key === ' ') && entry && hasData) {
                 e.preventDefault();
-                if (!entry || !hasData) return;
-                const target = e.currentTarget;
-                requestAnimationFrame(() => {
-                  const rect = target.getBoundingClientRect();
-                  const summary = buildTooltip(entry, category);
-                  onHover({
-                    label: `${category.label} — ${format(date, "d MMM", { locale: es })}`,
-                    summary,
-                    x: rect.left + rect.width / 2,
-                    y: rect.top,
-                  });
-                });
+                showTooltip(e.currentTarget, entry, category, date, onHover);
               }
             }}
           />

@@ -1,9 +1,5 @@
 import datetime
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from backend.db.database import Base
 from backend.db.models import (
     AppleHealthRecord,
     DailyEntry,
@@ -15,14 +11,8 @@ from backend.db.models import (
 )
 
 
-def _make_session(tmp_path):
-    engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
-    Base.metadata.create_all(engine)
-    return sessionmaker(bind=engine)()
-
-
-def test_create_daily_entry_with_pain_records(tmp_path):
-    session = _make_session(tmp_path)
+def test_create_daily_entry_with_pain_records(db_session):
+    session = db_session
     entry = DailyEntry(date=datetime.date(2026, 3, 27), mood_score=6, stretching=True)
     entry.pain_records.append(
         PainRecord(location="lumbar", intensity=6, pattern="constante", time_of_day="mañana")
@@ -40,8 +30,8 @@ def test_create_daily_entry_with_pain_records(tmp_path):
     assert result.pain_records[1].location == "left_knee"
 
 
-def test_create_full_entry_with_all_fields(tmp_path):
-    session = _make_session(tmp_path)
+def test_create_full_entry_with_all_fields(db_session):
+    session = db_session
     entry = DailyEntry(
         date=datetime.date(2026, 3, 27),
         stretching=True,
@@ -94,11 +84,11 @@ def test_create_full_entry_with_all_fields(tmp_path):
     assert result.extras[0].key == "rigidez_matutina"
 
 
-def test_daily_entry_date_unique(tmp_path):
+def test_daily_entry_date_unique(db_session):
     import pytest
     import sqlalchemy
 
-    session = _make_session(tmp_path)
+    session = db_session
     session.add(DailyEntry(date=datetime.date(2026, 3, 27)))
     session.commit()
     session.add(DailyEntry(date=datetime.date(2026, 3, 27)))
@@ -106,8 +96,8 @@ def test_daily_entry_date_unique(tmp_path):
         session.commit()
 
 
-def test_schema_field_creation(tmp_path):
-    session = _make_session(tmp_path)
+def test_schema_field_creation(db_session):
+    session = db_session
     field = SchemaField(
         field_name="rigidez_matutina",
         promoted_date=datetime.date(2026, 3, 27),
@@ -120,8 +110,8 @@ def test_schema_field_creation(tmp_path):
     assert result.field_name == "rigidez_matutina"
 
 
-def test_cascade_delete_removes_child_records(tmp_path):
-    session = _make_session(tmp_path)
+def test_cascade_delete_removes_child_records(db_session):
+    session = db_session
     entry = DailyEntry(date=datetime.date(2026, 3, 27))
     entry.pain_records.append(PainRecord(location="lumbar", intensity=5))
     entry.medication_records.append(MedicationRecord(name="Ibuprofen"))

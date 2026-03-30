@@ -1,8 +1,6 @@
 import datetime
 
 import pandas as pd
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from backend.analysis.correlations import (
     build_daily_dataframe,
@@ -11,7 +9,6 @@ from backend.analysis.correlations import (
     compute_stress_proxy,
     rank_pain_correlations,
 )
-from backend.db.database import Base
 from backend.db.models import (
     AppleHealthRecord,
     DailyEntry,
@@ -73,14 +70,8 @@ def test_rank_pain_correlations():
     assert abs_coeffs == sorted(abs_coeffs, reverse=True)
 
 
-def _make_session(tmp_path):
-    engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
-    Base.metadata.create_all(engine)
-    return sessionmaker(bind=engine)()
-
-
-def test_build_daily_dataframe_all_fields(tmp_path):
-    session = _make_session(tmp_path)
+def test_build_daily_dataframe_all_fields(db_session):
+    session = db_session
     entry = DailyEntry(
         date=datetime.date(2026, 3, 15),
         stretching=True,
@@ -187,8 +178,8 @@ def test_build_daily_dataframe_all_fields(tmp_path):
     assert df["workout_max_hr"].iloc[0] == 172
 
 
-def test_build_daily_dataframe_per_location_pain(tmp_path):
-    session = _make_session(tmp_path)
+def test_build_daily_dataframe_per_location_pain(db_session):
+    session = db_session
     entry = DailyEntry(date=datetime.date(2026, 3, 15), mood_score=5)
     entry.pain_records.append(PainRecord(location="lumbar", intensity=7))
     entry.pain_records.append(PainRecord(location="lumbar", intensity=5))
@@ -204,8 +195,8 @@ def test_build_daily_dataframe_per_location_pain(tmp_path):
     assert df["pain_mean"].iloc[0] == 5.0
 
 
-def test_build_daily_dataframe_empty_pain_records(tmp_path):
-    session = _make_session(tmp_path)
+def test_build_daily_dataframe_empty_pain_records(db_session):
+    session = db_session
     entry = DailyEntry(date=datetime.date(2026, 3, 15), mood_score=5)
     session.add(entry)
     session.commit()
@@ -217,8 +208,8 @@ def test_build_daily_dataframe_empty_pain_records(tmp_path):
     assert pd.isna(df["pain_mean"].iloc[0])
 
 
-def test_build_daily_dataframe_multiple_medications_averaged(tmp_path):
-    session = _make_session(tmp_path)
+def test_build_daily_dataframe_multiple_medications_averaged(db_session):
+    session = db_session
     entry = DailyEntry(date=datetime.date(2026, 3, 15), mood_score=5)
     entry.pain_records.append(PainRecord(location="lumbar", intensity=5))
     entry.medication_records.append(

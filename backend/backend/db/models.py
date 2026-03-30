@@ -241,6 +241,24 @@ class Extra(Base):
     entry: Mapped["DailyEntry"] = relationship(back_populates="extras")
 
 
+def eager_load_options():
+    """Selectinload options for all DailyEntry child relationships.
+
+    Used by entries router and analysis module to avoid N+1 queries.
+    """
+    from sqlalchemy.orm import selectinload
+
+    return (
+        selectinload(DailyEntry.pain_records),
+        selectinload(DailyEntry.medication_records),
+        selectinload(DailyEntry.weather_records),
+        selectinload(DailyEntry.apple_health_records),
+        selectinload(DailyEntry.nutrition_import_records),
+        selectinload(DailyEntry.workout_records),
+        selectinload(DailyEntry.extras),
+    )
+
+
 class SchemaField(Base):
     __tablename__ = "schema_fields"
 

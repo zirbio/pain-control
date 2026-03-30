@@ -1,11 +1,8 @@
 import datetime
 
 import numpy as np
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from backend.analysis.reports import generate_report
-from backend.db.database import Base
 from backend.db.models import (
     AppleHealthRecord,
     DailyEntry,
@@ -13,12 +10,6 @@ from backend.db.models import (
     PainRecord,
     WorkoutRecord,
 )
-
-
-def _make_session(tmp_path):
-    engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
-    Base.metadata.create_all(engine)
-    return sessionmaker(bind=engine)()
 
 
 def _populate_full_data(session, n_days=14):
@@ -60,9 +51,9 @@ def _populate_full_data(session, n_days=14):
     session.commit()
 
 
-def test_report_with_full_data(tmp_path):
+def test_report_with_full_data(db_session):
     """Report with all record types populated should contain all sections."""
-    session = _make_session(tmp_path)
+    session = db_session
     _populate_full_data(session, n_days=14)
 
     report = generate_report(
@@ -106,9 +97,9 @@ def test_report_with_full_data(tmp_path):
     assert len(report["top_correlations"]) <= 5
 
 
-def test_report_with_only_pain_data(tmp_path):
+def test_report_with_only_pain_data(db_session):
     """Report with only pain records should have pain section but not sleep/medication."""
-    session = _make_session(tmp_path)
+    session = db_session
     base_date = datetime.date(2026, 3, 1)
     for i in range(7):
         entry = DailyEntry(date=base_date + datetime.timedelta(days=i))
@@ -138,9 +129,9 @@ def test_report_with_only_pain_data(tmp_path):
     assert report["activity"]["active_days"] == 0
 
 
-def test_report_all_pain_max_none(tmp_path):
+def test_report_all_pain_max_none(db_session):
     """Report where all pain_max values are None (no pain records on entries)."""
-    session = _make_session(tmp_path)
+    session = db_session
     base_date = datetime.date(2026, 3, 1)
     for i in range(5):
         entry = DailyEntry(date=base_date + datetime.timedelta(days=i), mood_score=5)
@@ -160,9 +151,9 @@ def test_report_all_pain_max_none(tmp_path):
     assert report["period"]["days"] == 5
 
 
-def test_report_medication_below_trend_threshold(tmp_path):
+def test_report_medication_below_trend_threshold(db_session):
     """Report with exactly 2 medication effectiveness values (below the trend threshold of 3)."""
-    session = _make_session(tmp_path)
+    session = db_session
     base_date = datetime.date(2026, 3, 1)
     for i in range(5):
         entry = DailyEntry(date=base_date + datetime.timedelta(days=i))
@@ -187,9 +178,9 @@ def test_report_medication_below_trend_threshold(tmp_path):
     assert report["medication"]["trend"] is None
 
 
-def test_report_empty_dataframe(tmp_path):
+def test_report_empty_dataframe(db_session):
     """Report with no data at all should return error."""
-    session = _make_session(tmp_path)
+    session = db_session
 
     report = generate_report(
         session,
@@ -201,9 +192,9 @@ def test_report_empty_dataframe(tmp_path):
     assert report["error"] == "No data for this period"
 
 
-def test_report_good_and_bad_days_thresholds(tmp_path):
+def test_report_good_and_bad_days_thresholds(db_session):
     """Verify good_days (<=3) and bad_days (>=7) thresholds are correctly applied."""
-    session = _make_session(tmp_path)
+    session = db_session
     base_date = datetime.date(2026, 3, 1)
     # Specific intensities to test thresholds exactly
     intensities = [1, 3, 4, 6, 7, 9, 10, 2, 5, 8]

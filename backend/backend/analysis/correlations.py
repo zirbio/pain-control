@@ -3,10 +3,11 @@ import math
 
 import pandas as pd
 from scipy import stats
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from backend.db.models import (
     DailyEntry,
+    eager_load_options,
 )
 
 _APPLE_HEALTH_FIELDS = [
@@ -97,14 +98,8 @@ def build_daily_dataframe(
     end_date: datetime.date | None = None,
 ) -> pd.DataFrame:
     """Build a flat daily DataFrame from all record types for analysis."""
-    query = db.query(DailyEntry).options(
-        selectinload(DailyEntry.pain_records),
-        selectinload(DailyEntry.medication_records),
-        selectinload(DailyEntry.weather_records),
-        selectinload(DailyEntry.apple_health_records),
-        selectinload(DailyEntry.nutrition_import_records),
-        selectinload(DailyEntry.workout_records),
-    )
+    # eager_load_options includes extras; harmless for analysis (just unused)
+    query = db.query(DailyEntry).options(*eager_load_options())
     if start_date:
         query = query.filter(DailyEntry.date >= start_date)
     if end_date:
@@ -151,32 +146,30 @@ def build_daily_dataframe(
         effs = [m.effectiveness for m in entry.medication_records if m.effectiveness is not None]
         row["medication_effectiveness"] = round(sum(effs) / len(effs), 1) if effs else None
 
-        # Weather (first record)
-        w = entry.weather_records[0] if entry.weather_records else None
+        # First-record extraction for singleton relations
+        weather = entry.weather_records[0] if entry.weather_records else None
         for field in ("temperature_c", "humidity_pct", "pressure_hpa", "pressure_change_hpa"):
-            row[field] = getattr(w, field, None)
+            row[field] = getattr(weather, field, None)
 
-        # Apple Health (first record)
         ah = entry.apple_health_records[0] if entry.apple_health_records else None
         for field in _APPLE_HEALTH_FIELDS:
-            row[field] = getattr(ah, field, None) if ah else None
+            row[field] = getattr(ah, field, None)
 
-        # Nutrition Import (first record)
         ni = entry.nutrition_import_records[0] if entry.nutrition_import_records else None
         for field in _NUTRITION_IMPORT_FIELDS:
-            row[field] = getattr(ni, field, None) if ni else None
+            row[field] = getattr(ni, field, None)
 
         # Workout aggregation
-        wrs = entry.workout_records
-        row["workout_count"] = len(wrs)
-        row["workout_total_min"] = sum(w.duration_min or 0 for w in wrs)
-        row["workout_total_energy_kj"] = sum(w.active_energy_kj or 0 for w in wrs)
-        hrs = [w.max_hr for w in wrs if w.max_hr]
+        workouts = entry.workout_records
+        row["workout_count"] = len(workouts)
+        row["workout_total_min"] = sum(wr.duration_min or 0 for wr in workouts)
+        row["workout_total_energy_kj"] = sum(wr.active_energy_kj or 0 for wr in workouts)
+        hrs = [wr.max_hr for wr in workouts if wr.max_hr]
         row["workout_max_hr"] = max(hrs) if hrs else None
-        avgs = [w.avg_hr for w in wrs if w.avg_hr]
+        avgs = [wr.avg_hr for wr in workouts if wr.avg_hr]
         row["workout_avg_hr"] = round(sum(avgs) / len(avgs)) if avgs else None
-        workout_intensities = [w.intensity for w in wrs if w.intensity is not None]
-        row["workout_max_intensity"] = max(workout_intensities) if workout_intensities else None
+        intensities = [wr.intensity for wr in workouts if wr.intensity is not None]
+        row["workout_max_intensity"] = max(intensities) if intensities else None
 
         rows.append(row)
 

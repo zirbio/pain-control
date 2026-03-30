@@ -2,7 +2,7 @@ import datetime
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from backend.api.dependencies import get_db
 from backend.api.schemas import DailyEntryCreate, DailyEntryResponse
@@ -11,27 +11,32 @@ from backend.db.models import (
     Extra,
     MedicationRecord,
     PainRecord,
+    eager_load_options,
 )
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
 
 
+_DIRECT_FIELDS = (
+    "stretching",
+    "alcohol",
+    "heavy_dinner",
+    "omega3",
+    "vitamin_d",
+    "magnesium",
+    "turmeric",
+    "mood_score",
+    "stress_source",
+    "activity_pain_effect",
+)
+
+
 def _populate_entry(entry: DailyEntry, data: DailyEntryCreate) -> None:
     """Populate a DailyEntry with data from the create schema."""
-    # Direct fields
-    entry.stretching = data.stretching
-    entry.alcohol = data.alcohol
-    entry.heavy_dinner = data.heavy_dinner
-    entry.omega3 = data.omega3
-    entry.vitamin_d = data.vitamin_d
-    entry.magnesium = data.magnesium
-    entry.turmeric = data.turmeric
-    entry.mood_score = data.mood_score
+    for field in _DIRECT_FIELDS:
+        setattr(entry, field, getattr(data, field))
     entry.mood_emotions = json.dumps(data.mood_emotions) if data.mood_emotions else None
-    entry.stress_source = data.stress_source
-    entry.activity_pain_effect = data.activity_pain_effect
 
-    # Child records (1:N)
     entry.pain_records = [PainRecord(**r.model_dump()) for r in data.pain_records]
     entry.medication_records = [MedicationRecord(**r.model_dump()) for r in data.medication_records]
     entry.extras = [
@@ -76,15 +81,7 @@ def list_entries(
     limit: int = Query(default=90, ge=1, le=365),
     db: Session = Depends(get_db),
 ):
-    query = db.query(DailyEntry).options(
-        selectinload(DailyEntry.pain_records),
-        selectinload(DailyEntry.medication_records),
-        selectinload(DailyEntry.weather_records),
-        selectinload(DailyEntry.apple_health_records),
-        selectinload(DailyEntry.nutrition_import_records),
-        selectinload(DailyEntry.workout_records),
-        selectinload(DailyEntry.extras),
-    )
+    query = db.query(DailyEntry).options(*eager_load_options())
     if start_date:
         query = query.filter(DailyEntry.date >= start_date)
     if end_date:
