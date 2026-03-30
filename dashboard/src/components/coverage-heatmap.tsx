@@ -22,10 +22,9 @@ export interface CategoryDef {
 export const MANUAL_CATEGORIES: CategoryDef[] = [
   { key: "pain", label: "Dolor", check: (e) => e.pain_records.length > 0 },
   { key: "medication", label: "Medicación", check: (e) => e.medication_records.length > 0 },
-  { key: "mood", label: "Ánimo", check: (e) => e.mood_records.length > 0 },
-  { key: "activity", label: "Actividad", check: (e) => e.activity_records.length > 0 },
-  { key: "stress", label: "Estrés", check: (e) => e.stress_records.length > 0 },
-  { key: "alcohol", label: "Alcohol", check: (e) => e.nutrition_records.length > 0 },
+  { key: "mood", label: "Ánimo", check: (e) => e.mood_score !== null },
+  { key: "habits", label: "Hábitos", check: (e) => e.stretching !== null },
+  { key: "supplements", label: "Suplementos", check: (e) => e.omega3 !== null },
 ];
 
 const AUTO_CATEGORIES: CategoryDef[] = [
@@ -46,21 +45,21 @@ function buildTooltip(entry: DailyEntry, category: CategoryDef): string {
         .map((m) => `${m.name}${m.dose ? ` ${m.dose}` : ""}`)
         .join(", ");
     case "mood":
-      return entry.mood_records.map((m) => `${m.score}/10`).join(", ");
-    case "activity":
-      return entry.activity_records
-        .map((a) => `${a.type}${a.duration_min ? ` ${a.duration_min}min` : ""}`)
-        .join(", ");
-    case "stress":
-      return entry.stress_records
-        .map((s) => `${s.level}/10${s.source ? ` (${s.source})` : ""}`)
-        .join(", ");
-    case "alcohol": {
-      const n = entry.nutrition_records[0];
-      if (!n) return "";
+      return entry.mood_score !== null ? `${entry.mood_score}/10` : "";
+    case "habits": {
       const parts: string[] = [];
-      if (n.alcohol != null) parts.push(n.alcohol ? "Sí" : "No");
-      return parts.join(", ") || "Registrado";
+      if (entry.stretching) parts.push("Stretching");
+      if (entry.alcohol) parts.push("Alcohol");
+      if (entry.heavy_dinner) parts.push("Cena copiosa");
+      return parts.length > 0 ? parts.join(", ") : "Sin hábitos marcados";
+    }
+    case "supplements": {
+      const supps: string[] = [];
+      if (entry.omega3) supps.push("Ω3");
+      if (entry.vitamin_d) supps.push("Vit D");
+      if (entry.magnesium) supps.push("Mg");
+      if (entry.turmeric) supps.push("Cúrcuma");
+      return supps.length > 0 ? supps.join(", ") : "Ninguno";
     }
     case "weather": {
       const w = entry.weather_records[0];

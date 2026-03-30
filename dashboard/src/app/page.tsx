@@ -40,7 +40,7 @@ export default function DashboardPage() {
 
   const avgSleep = average(sleepValues ?? []);
 
-  const activeDays = entries?.filter((e) => e.activity_records.length > 0).length ?? 0;
+  const activeDays = entries?.filter((e) => e.workout_records.length > 0).length ?? 0;
   const totalDays = entries?.length ?? 0;
 
   const medEffValues = entries

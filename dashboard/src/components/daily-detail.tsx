@@ -115,7 +115,6 @@ export function DailyDetail({ entry, isLoading }: DailyDetailProps) {
 
   const weather = entry.weather_records[0] ?? null;
   const health = entry.apple_health_records[0] ?? null;
-  const nutrition = entry.nutrition_records[0] ?? null;
 
   return (
     <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-5 space-y-5 overflow-y-auto max-h-[calc(100vh-12rem)]">
@@ -199,58 +198,51 @@ export function DailyDetail({ entry, isLoading }: DailyDetailProps) {
       {/* Mood */}
       <div>
         <SectionTitle>&Aacute;nimo</SectionTitle>
-        {entry.mood_records.length > 0 ? (
-          <div className="space-y-1">
-            {entry.mood_records.map((mood) => (
-              <div key={mood.id} className="flex items-center gap-3">
-                <span className="font-display text-body tabular-nums text-text-primary">
-                  {mood.score}/10
-                </span>
-                {mood.emotions && (
-                  <span className="font-body text-small text-text-secondary">
-                    {(() => {
-                      try {
-                        const parsed = JSON.parse(mood.emotions);
-                        return Array.isArray(parsed) ? parsed.join(", ") : mood.emotions;
-                      } catch {
-                        return mood.emotions;
-                      }
-                    })()}
-                  </span>
-                )}
-              </div>
-            ))}
+        {entry.mood_score !== null ? (
+          <div className="flex items-center gap-3">
+            <span className="font-display text-body tabular-nums text-text-primary">
+              {entry.mood_score}/10
+            </span>
+            {entry.mood_emotions && (
+              <span className="font-body text-small text-text-secondary">
+                {(() => {
+                  try {
+                    const parsed = JSON.parse(entry.mood_emotions);
+                    return Array.isArray(parsed) ? parsed.join(", ") : entry.mood_emotions;
+                  } catch {
+                    return entry.mood_emotions;
+                  }
+                })()}
+              </span>
+            )}
           </div>
         ) : (
           <EmptyState message="Sin registro de &aacute;nimo" />
         )}
       </div>
 
-      {/* Activity records */}
+      {/* Activity & Pain Effect */}
       <div>
         <SectionTitle>Actividad</SectionTitle>
-        {entry.activity_records.length > 0 ? (
+        {entry.workout_records.length > 0 ? (
           <div className="space-y-1.5">
-            {entry.activity_records.map((act) => (
-              <div
-                key={act.id}
-                className="flex items-center justify-between"
-              >
+            {entry.workout_records.map((w) => (
+              <div key={w.id} className="flex items-center justify-between">
                 <span className="font-body text-small text-text-primary capitalize">
-                  {act.type}
+                  {w.workout_type}
                 </span>
-                <div className="flex items-center gap-2">
-                  {act.duration_min !== null && (
-                    <span className="font-body text-small text-text-secondary">
-                      {act.duration_min} min
-                    </span>
-                  )}
-                  {act.pain_effect && (
-                    <PainEffectLabel effect={act.pain_effect} />
-                  )}
-                </div>
+                {w.duration_min !== null && (
+                  <span className="font-body text-small text-text-secondary">
+                    {Math.round(w.duration_min)} min
+                  </span>
+                )}
               </div>
             ))}
+            {entry.activity_pain_effect && (
+              <div className="mt-1">
+                <PainEffectLabel effect={entry.activity_pain_effect} />
+              </div>
+            )}
           </div>
         ) : (
           <EmptyState message="Sin actividad registrada" />
@@ -260,67 +252,38 @@ export function DailyDetail({ entry, isLoading }: DailyDetailProps) {
       {/* Stress */}
       <div>
         <SectionTitle>Estr&eacute;s</SectionTitle>
-        {entry.stress_records.length > 0 ? (
-          <div className="space-y-1">
-            {entry.stress_records.map((s) => (
-              <div key={s.id} className="flex items-center gap-3">
-                <span className="font-display text-body tabular-nums text-text-primary">
-                  {s.level}/10
-                </span>
-                {s.source && (
-                  <span className="font-body text-small text-text-secondary">
-                    {s.source}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
+        {entry.stress_source ? (
+          <span className="font-body text-small text-text-secondary">
+            {entry.stress_source}
+          </span>
         ) : (
-          <EmptyState message="Sin registro de estr&eacute;s" />
+          <EmptyState message="Sin fuente de estr&eacute;s anotada" />
         )}
       </div>
 
-      {/* Nutrition */}
+      {/* Habits & Supplements */}
       <div>
-        <SectionTitle>Nutrici&oacute;n</SectionTitle>
-        {nutrition ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
+        <SectionTitle>H&aacute;bitos</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Stretching", value: entry.stretching },
+            { label: "Alcohol", value: entry.alcohol },
+            { label: "Cena copiosa", value: entry.heavy_dinner },
+            { label: "Omega 3", value: entry.omega3 },
+            { label: "Vitamina D", value: entry.vitamin_d },
+            { label: "Magnesio", value: entry.magnesium },
+            { label: "C\u00farcuma", value: entry.turmeric },
+          ].map(({ label, value }) => (
+            <div key={label}>
               <span className="font-body text-small text-text-muted block">
-                Agua
+                {label}
               </span>
               <span className="font-display text-body tabular-nums text-text-primary">
-                {nutrition.water_liters !== null
-                  ? `${nutrition.water_liters}L`
-                  : "—"}
+                {value === null ? "\u2014" : value ? "S\u00ed" : "No"}
               </span>
             </div>
-            <div>
-              <span className="font-body text-small text-text-muted block">
-                Caf&eacute;
-              </span>
-              <span className="font-display text-body tabular-nums text-text-primary">
-                {nutrition.caffeine_cups !== null
-                  ? `${nutrition.caffeine_cups}`
-                  : "—"}
-              </span>
-            </div>
-            <div>
-              <span className="font-body text-small text-text-muted block">
-                Alcohol
-              </span>
-              <span className="font-display text-body tabular-nums text-text-primary">
-                {nutrition.alcohol !== null
-                  ? nutrition.alcohol
-                    ? "S\u00ed"
-                    : "No"
-                  : "—"}
-              </span>
-            </div>
-          </div>
-        ) : (
-          <EmptyState message="Sin datos de nutrici&oacute;n" />
-        )}
+          ))}
+        </div>
       </div>
 
       {/* Weather */}
