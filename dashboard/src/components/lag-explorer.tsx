@@ -20,8 +20,8 @@ const TARGET = "pain_max";
 const VARIABLES = [
   "sleep_hours",
   "steps",
-  "stress_level",
-  "activity_minutes",
+  "stress_proxy",
+  "workout_total_min",
   "pressure_hpa",
   "pressure_change_hpa",
   "humidity_pct",
@@ -30,7 +30,13 @@ const VARIABLES = [
   "resting_hr",
   "hrv_ms",
   "alcohol",
-  "caffeine_cups",
+  "caffeine_mg",
+  "stretching",
+  "heavy_dinner",
+  "omega3",
+  "vitamin_d",
+  "magnesium",
+  "turmeric",
 ] as const;
 
 interface LagTooltipProps {

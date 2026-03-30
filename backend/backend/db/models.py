@@ -34,7 +34,7 @@ class DailyEntry(Base):
     mood_emotions: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Stress (optional subjective annotation — level derived from HRV)
-    stress_source: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    stress_source: Mapped[str | None] = mapped_column(String(200), nullable=True)
 
     # Activity impact (promoted from ActivityRecord)
     activity_pain_effect: Mapped[str | None] = mapped_column(String(20), nullable=True)

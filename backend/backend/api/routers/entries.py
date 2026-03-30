@@ -68,7 +68,9 @@ def create_or_update_entry(
 
 @router.get("/{date}", response_model=DailyEntryResponse)
 def get_entry_by_date(date: datetime.date, db: Session = Depends(get_db)):
-    entry = db.query(DailyEntry).filter(DailyEntry.date == date).first()
+    entry = (
+        db.query(DailyEntry).options(*eager_load_options()).filter(DailyEntry.date == date).first()
+    )
     if not entry:
         raise HTTPException(status_code=404, detail=f"No entry for {date}")
     return entry
