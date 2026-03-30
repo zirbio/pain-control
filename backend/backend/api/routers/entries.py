@@ -35,7 +35,7 @@ def _populate_entry(entry: DailyEntry, data: DailyEntryCreate) -> None:
     """Populate a DailyEntry with data from the create schema."""
     for field in _DIRECT_FIELDS:
         setattr(entry, field, getattr(data, field))
-    entry.mood_emotions = json.dumps(data.mood_emotions) if data.mood_emotions else None
+    entry.mood_emotions = json.dumps(data.mood_emotions) if data.mood_emotions is not None else None
 
     entry.pain_records = [PainRecord(**r.model_dump()) for r in data.pain_records]
     entry.medication_records = [MedicationRecord(**r.model_dump()) for r in data.medication_records]
