@@ -1,9 +1,33 @@
 import csv
 import datetime
+import logging
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+WORKOUT_TYPE_MAP: dict[str, str] = {
+    "Entrenamiento de Fuerza Funcional": "Rehabilitation",
+    "Pilates": "Pilates",
+    "Interior Ciclismo": "Indoor Cycling",
+    "Caminata": "Walking",
+    "Yoga": "Yoga",
+    "Natación": "Swimming",
+    "Ciclismo": "Cycling",
+    "Elíptica": "Elliptical",
+    "Estiramientos": "Stretching",
+    "Golf": "Golf",
+}
+
+
+def normalize_workout_type(raw_type: str) -> str:
+    normalized = WORKOUT_TYPE_MAP.get(raw_type)
+    if normalized is None:
+        logger.warning("Unknown workout type: '%s' — storing as-is", raw_type)
+        return raw_type
+    return normalized
 
 
 @dataclass
