@@ -3,7 +3,12 @@ from pathlib import Path
 
 import pytest
 
-from backend.importers.apple_health import AppleHealthImporter, DailyHealthData, DailyImportData
+from backend.importers.apple_health import (
+    AppleHealthImporter,
+    DailyHealthData,
+    DailyImportData,
+    normalize_workout_type,
+)
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -161,7 +166,7 @@ def test_parse_workouts_csv(tmp_path):
     assert abs(pilates.active_energy_kj - 1201.17) < 0.01
 
     ciclismo = workouts[1]
-    assert ciclismo.workout_type == "Interior Ciclismo"
+    assert ciclismo.workout_type == "Indoor Cycling"
     assert ciclismo.date == datetime.date(2026, 3, 22)
     assert abs(ciclismo.distance_km - 9.70) < 0.01
     assert ciclismo.max_hr == 158
@@ -229,3 +234,22 @@ def test_parse_csv_no_nutrition_columns(tmp_path):
     data = results[datetime.date(2026, 3, 21)]
     assert data.health.steps == 5000
     assert data.nutrition is None
+
+
+def test_normalize_workout_type_known_types():
+    assert normalize_workout_type("Entrenamiento de Fuerza Funcional") == "Rehabilitation"
+    assert normalize_workout_type("Interior Ciclismo") == "Indoor Cycling"
+    assert normalize_workout_type("Pilates") == "Pilates"
+    assert normalize_workout_type("Caminata") == "Walking"
+    assert normalize_workout_type("Yoga") == "Yoga"
+    assert normalize_workout_type("Natación") == "Swimming"
+    assert normalize_workout_type("Ciclismo") == "Cycling"
+    assert normalize_workout_type("Elíptica") == "Elliptical"
+    assert normalize_workout_type("Estiramientos") == "Stretching"
+    assert normalize_workout_type("Golf") == "Golf"
+
+
+def test_normalize_workout_type_unknown_passthrough(caplog):
+    result = normalize_workout_type("Escalada en Roca")
+    assert result == "Escalada en Roca"
+    assert "Unknown workout type" in caplog.text
