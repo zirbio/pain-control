@@ -390,7 +390,7 @@ class AppleHealthImporter:
                 results.append(
                     WorkoutData(
                         date=date,
-                        workout_type=workout_type,
+                        workout_type=normalize_workout_type(workout_type),
                         start_time=start_time,
                         end_time=end_time,
                         duration_min=(round(duration_min, 1) if duration_min is not None else None),

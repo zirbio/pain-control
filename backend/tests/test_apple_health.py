@@ -166,7 +166,7 @@ def test_parse_workouts_csv(tmp_path):
     assert abs(pilates.active_energy_kj - 1201.17) < 0.01
 
     ciclismo = workouts[1]
-    assert ciclismo.workout_type == "Interior Ciclismo"
+    assert ciclismo.workout_type == "Indoor Cycling"
     assert ciclismo.date == datetime.date(2026, 3, 22)
     assert abs(ciclismo.distance_km - 9.70) < 0.01
     assert ciclismo.max_hr == 158
