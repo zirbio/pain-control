@@ -1,6 +1,6 @@
 import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # --- Create schemas (input) ---
 
@@ -44,9 +44,20 @@ class DailyEntryCreate(BaseModel):
     mood_score: int = Field(ge=1, le=10)
     mood_emotions: list[str] | None = None
 
+    # Day type (auto-detected if omitted; send explicitly for vacation)
+    day_type: str | None = None
+
     # Optional subjective fields
     stress_source: str | None = None
     activity_pain_effect: str | None = None
+
+    @field_validator("day_type")
+    @classmethod
+    def validate_day_type(cls, v: str | None) -> str | None:
+        if v is not None and v not in ("workday", "weekend", "vacation"):
+            msg = "day_type must be 'workday', 'weekend', or 'vacation'"
+            raise ValueError(msg)
+        return v
 
     # Child records (1:N)
     pain_records: list[PainRecordCreate] = []
@@ -194,6 +205,7 @@ class DailyEntryResponse(BaseModel):
     turmeric: bool | None = None
     mood_score: int | None = None
     mood_emotions: str | None = None
+    day_type: str | None = None
     stress_source: str | None = None
     activity_pain_effect: str | None = None
 

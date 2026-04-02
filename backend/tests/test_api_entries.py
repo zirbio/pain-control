@@ -140,6 +140,54 @@ def test_list_entries_with_date_range(client):
     assert len(response.json()) == 2
 
 
+def test_day_type_auto_detects_workday(client):
+    # 2026-03-27 is a Friday
+    response = client.post("/api/entries", json=_base_entry("2026-03-27"))
+    assert response.status_code == 201
+    assert response.json()["day_type"] == "workday"
+
+
+def test_day_type_auto_detects_weekend(client):
+    # 2026-03-28 is a Saturday
+    response = client.post("/api/entries", json=_base_entry("2026-03-28"))
+    assert response.status_code == 201
+    assert response.json()["day_type"] == "weekend"
+
+
+def test_day_type_explicit_vacation_preserved(client):
+    response = client.post("/api/entries", json=_base_entry("2026-03-27", day_type="vacation"))
+    assert response.status_code == 201
+    assert response.json()["day_type"] == "vacation"
+
+
+def test_day_type_auto_detects_sunday(client):
+    # 2026-03-29 is a Sunday
+    response = client.post("/api/entries", json=_base_entry("2026-03-29"))
+    assert response.status_code == 201
+    assert response.json()["day_type"] == "weekend"
+
+
+def test_day_type_vacation_preserved_on_update(client):
+    # Create with vacation
+    client.post("/api/entries", json=_base_entry("2026-03-27", day_type="vacation"))
+    # Update without sending day_type — vacation must be preserved
+    response = client.post("/api/entries", json=_base_entry("2026-03-27", mood_score=8))
+    assert response.status_code == 200
+    assert response.json()["day_type"] == "vacation"
+
+
+def test_day_type_invalid_value_rejected(client):
+    response = client.post("/api/entries", json=_base_entry("2026-03-27", day_type="holiday"))
+    assert response.status_code == 422
+
+
+def test_day_type_in_get_response(client):
+    client.post("/api/entries", json=_base_entry("2026-03-27"))
+    response = client.get("/api/entries/2026-03-27")
+    assert response.status_code == 200
+    assert response.json()["day_type"] == "workday"
+
+
 def test_delete_entry(client):
     client.post("/api/entries", json=_base_entry())
     response = client.delete("/api/entries/2026-03-27")

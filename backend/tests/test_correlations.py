@@ -160,6 +160,9 @@ def test_build_daily_dataframe_all_fields(db_session):
     assert df["vitamin_d"].iloc[0] == 1
     assert df["magnesium"].iloc[0] == 1
     assert df["turmeric"].iloc[0] == 0
+    # Day type one-hot (None when day_type not set)
+    assert df["is_weekend"].iloc[0] is None
+    assert df["is_vacation"].iloc[0] is None
     # Medication
     assert df["medication_effectiveness"].iloc[0] == 7.0
     # Weather
@@ -176,6 +179,29 @@ def test_build_daily_dataframe_all_fields(db_session):
     assert df["workout_count"].iloc[0] == 2
     assert df["workout_total_min"].iloc[0] == 98.0
     assert df["workout_max_hr"].iloc[0] == 172
+
+
+def test_build_daily_dataframe_day_type_one_hot(db_session):
+    session = db_session
+    # Sunday (weekend) and Monday (workday)
+    e1 = DailyEntry(date=datetime.date(2026, 3, 15), mood_score=5, day_type="weekend")
+    e1.pain_records.append(PainRecord(location="lumbar", intensity=5))
+    e2 = DailyEntry(date=datetime.date(2026, 3, 16), mood_score=6, day_type="workday")
+    e2.pain_records.append(PainRecord(location="lumbar", intensity=3))
+    e3 = DailyEntry(date=datetime.date(2026, 3, 17), mood_score=7, day_type="vacation")
+    e3.pain_records.append(PainRecord(location="lumbar", intensity=2))
+    session.add_all([e1, e2, e3])
+    session.commit()
+
+    df = build_daily_dataframe(session)
+
+    assert len(df) == 3
+    assert df["is_weekend"].iloc[0] == 1
+    assert df["is_vacation"].iloc[0] == 0
+    assert df["is_weekend"].iloc[1] == 0
+    assert df["is_vacation"].iloc[1] == 0
+    assert df["is_weekend"].iloc[2] == 0
+    assert df["is_vacation"].iloc[2] == 1
 
 
 def test_build_daily_dataframe_per_location_pain(db_session):

@@ -39,6 +39,9 @@ class DailyEntry(Base):
     # Activity impact (promoted from ActivityRecord)
     activity_pain_effect: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
+    # Day type (workday / weekend / vacation — auto-detected from weekday)
+    day_type: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
     # Daily habits
     alcohol: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     heavy_dinner: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
