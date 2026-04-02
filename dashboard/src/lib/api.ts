@@ -134,6 +134,7 @@ export interface DailyEntry {
   turmeric: boolean | null;
   mood_score: number | null;
   mood_emotions: string | null;
+  day_type: string | null;
   stress_source: string | null;
   activity_pain_effect: string | null;
 

@@ -129,3 +129,19 @@ def test_mood_score_boundary_values():
     assert entry_min.mood_score == 1
     entry_max = _base_entry(mood_score=10)
     assert entry_max.mood_score == 10
+
+
+def test_day_type_valid_values():
+    for value in ("workday", "weekend", "vacation"):
+        entry = _base_entry(day_type=value)
+        assert entry.day_type == value
+
+
+def test_day_type_none_allowed():
+    entry = _base_entry()
+    assert entry.day_type is None
+
+
+def test_day_type_invalid_value():
+    with pytest.raises(ValidationError):
+        _base_entry(day_type="holiday")

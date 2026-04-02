@@ -26,9 +26,16 @@ _DIRECT_FIELDS = (
     "magnesium",
     "turmeric",
     "mood_score",
+    "day_type",
     "stress_source",
     "activity_pain_effect",
 )
+
+
+def _auto_detect_day_type(entry: DailyEntry, date: datetime.date) -> None:
+    """Set day_type from weekday if not explicitly provided."""
+    if entry.day_type is None:
+        entry.day_type = "weekend" if date.weekday() >= 5 else "workday"
 
 
 def _populate_entry(entry: DailyEntry, data: DailyEntryCreate) -> None:
@@ -51,7 +58,11 @@ def create_or_update_entry(
 ):
     existing = db.query(DailyEntry).filter(DailyEntry.date == data.date).first()
     if existing:
+        prev_day_type = existing.day_type
         _populate_entry(existing, data)
+        if data.day_type is None:
+            existing.day_type = prev_day_type
+        _auto_detect_day_type(existing, data.date)
         db.commit()
         db.refresh(existing)
         response.status_code = 200
@@ -59,6 +70,7 @@ def create_or_update_entry(
 
     entry = DailyEntry(date=data.date)
     _populate_entry(entry, data)
+    _auto_detect_day_type(entry, data.date)
     db.add(entry)
     db.commit()
     db.refresh(entry)

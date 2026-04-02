@@ -124,6 +124,11 @@ def build_daily_dataframe(
         # Mood from DailyEntry
         row["mood_score"] = entry.mood_score
 
+        # Day type one-hot encoding (workday is implicit reference category)
+        dt = entry.day_type
+        row["is_weekend"] = int(dt == "weekend") if dt is not None else None
+        row["is_vacation"] = int(dt == "vacation") if dt is not None else None
+
         # Pain: global aggregates
         if entry.pain_records:
             intensities = [p.intensity for p in entry.pain_records]

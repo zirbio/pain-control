@@ -69,6 +69,12 @@ function SkeletonDetail() {
   );
 }
 
+const DAY_TYPE_CONFIG: Record<string, { label: string; color: string }> = {
+  vacation: { label: "Vacaciones", color: accentColors.positive },
+  weekend: { label: "Fin de semana", color: accentColors.info },
+  workday: { label: "Laborable", color: textColors.muted },
+};
+
 const PAIN_EFFECT_COLORS: Record<string, string> = {
   mejoró: accentColors.positive,
   empeoró: accentColors.negative,
@@ -115,14 +121,25 @@ export function DailyDetail({ entry, isLoading }: DailyDetailProps) {
 
   const weather = entry.weather_records[0] ?? null;
   const health = entry.apple_health_records[0] ?? null;
+  const dayTypeCfg = entry.day_type && entry.day_type !== "workday"
+    ? DAY_TYPE_CONFIG[entry.day_type]
+    : null;
 
   return (
     <div className="bg-bg-secondary border border-bg-tertiary rounded-card p-5 space-y-5 overflow-y-auto max-h-[calc(100vh-12rem)]">
       {/* Date header */}
-      <div>
+      <div className="flex items-center gap-3">
         <h2 className="font-display text-h2 text-text-primary capitalize">
           {dateFormatted}
         </h2>
+        {dayTypeCfg && (
+          <span
+            className="font-body text-small px-2 py-0.5 rounded-full border"
+            style={{ color: dayTypeCfg.color, borderColor: dayTypeCfg.color }}
+          >
+            {dayTypeCfg.label}
+          </span>
+        )}
       </div>
 
       {/* Pain records */}
