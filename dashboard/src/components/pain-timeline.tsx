@@ -17,7 +17,7 @@ import type { DailyEntry } from "@/lib/api";
 import { accentColors, painScale, chartTickStyle, chartGridProps } from "@/lib/design-tokens";
 
 const LOCATION_COLORS: Record<string, string> = {
-  lower_back: painScale[8],   // cinnabar
+  lumbar: painScale[8],        // cinnabar
   left_knee: painScale[5],    // amber
   knee: painScale[5],         // amber
   shoulder: painScale[3],     // sage-lime

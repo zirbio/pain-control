@@ -3471,7 +3471,7 @@ This is the signature component. Implementation details:
 - Multi-series Recharts LineChart with curveNatural
 - Atmospheric background via linearGradient that shifts based on pressure data
 - Custom tooltip with full day summary
-- Location colors: lower_back=`#C4512A`, left_knee=`#D4A03A`, shoulder=`#A8B86A`
+- Location colors: lumbar=`#C4512A`, left_knee=`#D4A03A`, shoulder=`#A8B86A`
 
 - [ ] **Step 1: Implement PainTimeline**
 

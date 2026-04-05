@@ -86,7 +86,7 @@ Multiple per day (lumbar + ankle + sciatica can coexist).
 |---|---|---|
 | id | INTEGER PK | auto |
 | entry_id | FK → daily_entries | |
-| location | TEXT | "lower_back", "left_knee", "shoulder" |
+| location | TEXT | "lumbar", "left_knee", "shoulder" |
 | intensity | INTEGER 0-10 | 6 |
 | pattern | TEXT | "constante", "intermitente", "matutino" |
 | time_of_day | TEXT | "mañana", "tarde", "noche" |
