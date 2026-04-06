@@ -258,8 +258,9 @@ def compute_lag_correlation(
 
 def rank_pain_correlations(df: pd.DataFrame, pain_column: str = "pain_max") -> list[dict]:
     numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
-    if pain_column in numeric_cols:
-        numeric_cols.remove(pain_column)
+    # Exclude pain aggregates (tautological) and the target column itself
+    exclude = {pain_column, "pain_max", "pain_mean"}
+    numeric_cols = [c for c in numeric_cols if c not in exclude]
 
     rankings = []
     for col in numeric_cols:
