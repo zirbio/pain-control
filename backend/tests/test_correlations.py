@@ -70,6 +70,31 @@ def test_rank_pain_correlations():
     assert abs_coeffs == sorted(abs_coeffs, reverse=True)
 
 
+def test_rank_pain_correlations_excludes_tautological_columns():
+    """pain_max, pain_mean are excluded; per-location pain columns are kept."""
+    df = _sample_dataframe()
+    df["pain_mean"] = df["pain_max"] * 0.8
+    df["pain_lumbar"] = df["pain_max"]
+    rankings = rank_pain_correlations(df, "pain_max")
+    ranked_vars = {r["variable"] for r in rankings}
+    assert "pain_mean" not in ranked_vars
+    assert "pain_lumbar" in ranked_vars  # cross-location analysis is valid
+    assert "sleep_hours" in ranked_vars
+
+
+def test_rank_pain_correlations_with_location_target():
+    """When target is a location column, aggregates and target are excluded."""
+    df = _sample_dataframe()
+    df["pain_mean"] = df["pain_max"] * 0.8
+    df["pain_lumbar"] = df["pain_max"]
+    rankings = rank_pain_correlations(df, "pain_lumbar")
+    ranked_vars = {r["variable"] for r in rankings}
+    assert "pain_lumbar" not in ranked_vars  # target excluded
+    assert "pain_max" not in ranked_vars  # aggregate excluded
+    assert "pain_mean" not in ranked_vars  # aggregate excluded
+    assert "sleep_hours" in ranked_vars
+
+
 def test_build_daily_dataframe_all_fields(db_session):
     session = db_session
     entry = DailyEntry(
