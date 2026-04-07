@@ -159,6 +159,20 @@ def _parse_flexible_datetime(date_str: str) -> datetime.datetime:
     return datetime.datetime.strptime(s[:16], "%Y-%m-%d %H:%M")
 
 
+def _parse_duration_minutes(value: str) -> float | None:
+    """Parse a "H:M:S" or "M:S" duration string into minutes. Returns None if empty/malformed."""
+    if not value:
+        return None
+    parts = value.split(":")
+    if len(parts) == 3:
+        h, m, s = (float(p) for p in parts)
+        return h * 60 + m + s / 60
+    if len(parts) == 2:
+        m, s = (float(p) for p in parts)
+        return m + s / 60
+    return None
+
+
 class AppleHealthImporter:
     def parse_xml(self, xml_path: Path) -> dict[datetime.date, DailyHealthData]:
         tree = ET.parse(xml_path)
@@ -404,36 +418,22 @@ class AppleHealthImporter:
                     continue
 
                 start_time = _parse_flexible_datetime(start_str)
-                date = start_time.date()
-
                 end_str = row.get("End", "").strip()
-                end_time: datetime.datetime | None = None
-                if end_str:
-                    end_time = _parse_flexible_datetime(end_str)
+                end_time = _parse_flexible_datetime(end_str) if end_str else None
 
-                duration_str = row.get("Duration", "").strip()
-                duration_min: float | None = None
-                if duration_str:
-                    parts = duration_str.split(":")
-                    if len(parts) == 3:
-                        h, m, s = (float(p) for p in parts)
-                        duration_min = h * 60 + m + s / 60
-                    elif len(parts) == 2:
-                        m, s = (float(p) for p in parts)
-                        duration_min = m + s / 60
-
-                intensity_col = cols.get("intensity")
-                intensity = self._row_float(row, intensity_col) if intensity_col else None
+                duration_min = _parse_duration_minutes(row.get("Duration", "").strip())
+                if duration_min is not None:
+                    duration_min = round(duration_min, 1)
 
                 results.append(
                     WorkoutData(
-                        date=date,
+                        date=start_time.date(),
                         workout_type=normalize_workout_type(workout_type),
                         start_time=start_time,
                         end_time=end_time,
-                        duration_min=(round(duration_min, 1) if duration_min is not None else None),
+                        duration_min=duration_min,
                         active_energy_kj=self._row_float(row, cols["active_energy_kj"]),
-                        intensity=intensity,
+                        intensity=self._csv_float(row, "intensity", cols),
                         max_hr=self._row_int(row, cols["max_hr"]),
                         avg_hr=self._row_int(row, cols["avg_hr"]),
                         distance_km=self._row_float(row, cols["distance_km"]),
