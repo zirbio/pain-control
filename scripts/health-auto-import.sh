@@ -1,5 +1,11 @@
 #!/bin/bash
-# health-auto-import.sh — Copy new Health Auto Export CSVs and trigger import
+# health-auto-import.sh — Copy new Health Auto Export CSVs and trigger import.
+#
+# Companion launchd agent: scripts/com.pain-control.auto-import.plist
+# When you change WatchPaths in the plist, redeploy with:
+#   cp scripts/com.pain-control.auto-import.plist ~/Library/LaunchAgents/
+#   launchctl unload ~/Library/LaunchAgents/com.pain-control.auto-import.plist
+#   launchctl load ~/Library/LaunchAgents/com.pain-control.auto-import.plist
 set -euo pipefail
 
 PROJECT_DIR="/Users/silvio_requena/Code/pain-control"

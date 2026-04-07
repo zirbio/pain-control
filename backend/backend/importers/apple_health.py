@@ -433,6 +433,9 @@ class AppleHealthImporter:
                         end_time=end_time,
                         duration_min=duration_min,
                         active_energy_kj=self._row_float(row, cols["active_energy_kj"]),
+                        # intensity uses _csv_float (tolerates missing key) because v2 omits
+                        # the column; other fields use _row_*/cols[...] because their keys
+                        # exist in both maps.
                         intensity=self._csv_float(row, "intensity", cols),
                         max_hr=self._row_int(row, cols["max_hr"]),
                         avg_hr=self._row_int(row, cols["avg_hr"]),
