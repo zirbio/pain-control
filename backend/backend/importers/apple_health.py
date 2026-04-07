@@ -21,6 +21,29 @@ WORKOUT_TYPE_MAP: dict[str, str] = {
     "Golf": "Golf",
 }
 
+# Workout CSV column maps. Health Auto Export changed format around 2026-03-28:
+# v1 (Spanish, single combined file) → v2 (English, one file per day, separate iCloud folder).
+# Both formats use identical "Start", "End", "Duration" column names.
+WORKOUT_COLUMNS_V1: dict[str, str] = {
+    "type": "Workout Type",
+    "active_energy_kj": "Energía Activa (kJ)",
+    "intensity": "Intensidad (kcal/hr·kg)",
+    "max_hr": "Frecuencia Cardíaca Máxima (bpm)",
+    "avg_hr": "Frecuencia Cardíaca Promedio (bpm)",
+    "distance_km": "Distancia (km)",
+    "steps": "Conteo de Pasos",
+}
+
+WORKOUT_COLUMNS_V2: dict[str, str] = {
+    "type": "Type",
+    "active_energy_kj": "Active Energy (kJ)",
+    # v2 dropped the "Intensidad" column entirely.
+    "max_hr": "Max Heart Rate (bpm)",
+    "avg_hr": "Avg Heart Rate (bpm)",
+    "distance_km": "Distance (km)",
+    "steps": "Step Count (count)",
+}
+
 
 def normalize_workout_type(raw_type: str) -> str:
     normalized = WORKOUT_TYPE_MAP.get(raw_type)
@@ -362,8 +385,20 @@ class AppleHealthImporter:
 
         with open(csv_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
+            fieldnames = reader.fieldnames or []
+
+            if "Workout Type" in fieldnames:
+                cols = WORKOUT_COLUMNS_V1
+            elif "Type" in fieldnames:
+                cols = WORKOUT_COLUMNS_V2
+            else:
+                raise ValueError(
+                    f"Unrecognized workout CSV header in {csv_path.name}: "
+                    f"expected 'Workout Type' (v1) or 'Type' (v2), got {fieldnames}"
+                )
+
             for row in reader:
-                workout_type = row.get("Workout Type", "").strip()
+                workout_type = row.get(cols["type"], "").strip()
                 start_str = row.get("Start", "").strip()
                 if not workout_type or not start_str:
                     continue
@@ -387,6 +422,9 @@ class AppleHealthImporter:
                         m, s = (float(p) for p in parts)
                         duration_min = m + s / 60
 
+                intensity_col = cols.get("intensity")
+                intensity = self._row_float(row, intensity_col) if intensity_col else None
+
                 results.append(
                     WorkoutData(
                         date=date,
@@ -394,12 +432,12 @@ class AppleHealthImporter:
                         start_time=start_time,
                         end_time=end_time,
                         duration_min=(round(duration_min, 1) if duration_min is not None else None),
-                        active_energy_kj=self._row_float(row, "Energía Activa (kJ)"),
-                        intensity=self._row_float(row, "Intensidad (kcal/hr·kg)"),
-                        max_hr=self._row_int(row, "Frecuencia Cardíaca Máxima (bpm)"),
-                        avg_hr=self._row_int(row, "Frecuencia Cardíaca Promedio (bpm)"),
-                        distance_km=self._row_float(row, "Distancia (km)"),
-                        steps=self._row_int(row, "Conteo de Pasos"),
+                        active_energy_kj=self._row_float(row, cols["active_energy_kj"]),
+                        intensity=intensity,
+                        max_hr=self._row_int(row, cols["max_hr"]),
+                        avg_hr=self._row_int(row, cols["avg_hr"]),
+                        distance_km=self._row_float(row, cols["distance_km"]),
+                        steps=self._row_int(row, cols["steps"]),
                     )
                 )
 

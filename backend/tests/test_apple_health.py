@@ -253,3 +253,57 @@ def test_normalize_workout_type_unknown_passthrough(caplog):
     result = normalize_workout_type("Escalada en Roca")
     assert result == "Escalada en Roca"
     assert "Unknown workout type" in caplog.text
+
+
+def test_parse_workouts_csv_v2_english_format(tmp_path):
+    """v2 format: Health Auto Export switched to English headers (~Mar 2026)."""
+    csv_file = tmp_path / "Workouts-2026-04-06.csv"
+    csv_file.write_text(
+        "Type,Start,End,Duration,Total Energy (kJ),Active Energy (kJ),"
+        "Max Heart Rate (bpm),Avg Heart Rate (bpm),Distance (km),"
+        "Avg Speed (km/hr),Step Count (count),Step Cadence (spm),"
+        "Swimming Stroke Count (count),Swim Stoke Cadence (spm),"
+        "Flights Climbed (count),Elevation Ascended (m),Elevation Descended (m)\n"
+        "Golf,2026-04-06 16:32,2026-04-06 18:35,02:02:45,4343,3436,"
+        "141,105.78,3.59,1.76,5068,41.29,,,,,\n"
+        "Pilates,2026-04-06 09:03,2026-04-06 10:02,00:58:41,1315,918.18,"
+        "127,93.75,,,100,1.7,,,,,\n"
+    )
+    importer = AppleHealthImporter()
+    workouts = importer.parse_workouts_csv(csv_file)
+
+    assert len(workouts) == 2
+
+    golf = workouts[0]
+    assert golf.workout_type == "Golf"
+    assert golf.date == datetime.date(2026, 4, 6)
+    assert abs(golf.duration_min - 122.75) < 0.1
+    assert golf.max_hr == 141
+    assert golf.avg_hr == 105
+    assert abs(golf.active_energy_kj - 3436) < 0.01
+    assert abs(golf.distance_km - 3.59) < 0.01
+    assert golf.steps == 5068
+    # v2 has no intensity column
+    assert golf.intensity is None
+
+    pilates = workouts[1]
+    assert pilates.workout_type == "Pilates"
+    assert pilates.date == datetime.date(2026, 4, 6)
+    assert pilates.max_hr == 127
+    assert pilates.avg_hr == 93
+    assert abs(pilates.active_energy_kj - 918.18) < 0.01
+    # Distance column present but empty for indoor Pilates
+    assert pilates.distance_km is None
+    assert pilates.steps == 100
+    assert pilates.intensity is None
+
+
+def test_parse_workouts_csv_unknown_header_raises(tmp_path):
+    """Unknown header schema must raise loudly, not silently return []."""
+    csv_file = tmp_path / "Workouts-future.csv"
+    csv_file.write_text(
+        "Activity,Started,Ended,Length\nYoga,2026-05-01 08:00,2026-05-01 08:45,45:00\n"
+    )
+    importer = AppleHealthImporter()
+    with pytest.raises(ValueError, match="Unrecognized workout CSV header"):
+        importer.parse_workouts_csv(csv_file)
