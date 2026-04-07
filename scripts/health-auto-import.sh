@@ -3,7 +3,8 @@
 set -euo pipefail
 
 PROJECT_DIR="/Users/silvio_requena/Code/pain-control"
-ICLOUD_DIR="$HOME/Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/macOS-Silvio-Salud"
+ICLOUD_HEALTH_DIR="$HOME/Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/macOS-Silvio-Salud"
+ICLOUD_WORKOUTS_DIR="$HOME/Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/macOS-Silvio-Workouts"
 IMPORTS_DIR="$PROJECT_DIR/data/imports"
 LOG_FILE="$PROJECT_DIR/data/logs/auto-import.log"
 API_URL="http://127.0.0.1:8420/api/imports/apple-health"
@@ -15,25 +16,35 @@ log() {
 # Ensure imports dir exists
 mkdir -p "$IMPORTS_DIR"
 
-# Check source folder exists
-if [ ! -d "$ICLOUD_DIR" ]; then
-    log "ERROR: iCloud folder not found: $ICLOUD_DIR"
+# Check source folders exist
+if [ ! -d "$ICLOUD_HEALTH_DIR" ]; then
+    log "ERROR: iCloud health folder not found: $ICLOUD_HEALTH_DIR"
     exit 1
+fi
+if [ ! -d "$ICLOUD_WORKOUTS_DIR" ]; then
+    log "WARN: iCloud workouts folder not found: $ICLOUD_WORKOUTS_DIR"
 fi
 
 # Copy new CSV files (skip if already present in imports)
 copied=0
-for src_file in "$ICLOUD_DIR"/HealthMetrics-*.csv "$ICLOUD_DIR"/Workouts-*.csv; do
-    [ -f "$src_file" ] || continue
-    filename=$(basename "$src_file")
-    dest_file="$IMPORTS_DIR/$filename"
+sync_dir() {
+    local src_dir="$1"
+    local pattern="$2"
+    [ -d "$src_dir" ] || return 0
+    for src_file in "$src_dir"/$pattern; do
+        [ -f "$src_file" ] || continue
+        filename=$(basename "$src_file")
+        dest_file="$IMPORTS_DIR/$filename"
+        if [ ! -f "$dest_file" ] || [ "$src_file" -nt "$dest_file" ]; then
+            cp "$src_file" "$dest_file"
+            log "COPIED: $filename"
+            copied=$((copied + 1))
+        fi
+    done
+}
 
-    if [ ! -f "$dest_file" ] || [ "$src_file" -nt "$dest_file" ]; then
-        cp "$src_file" "$dest_file"
-        log "COPIED: $filename"
-        copied=$((copied + 1))
-    fi
-done
+sync_dir "$ICLOUD_HEALTH_DIR" "HealthMetrics-*.csv"
+sync_dir "$ICLOUD_WORKOUTS_DIR" "Workouts-*.csv"
 
 if [ "$copied" -eq 0 ]; then
     log "No new files to import"
