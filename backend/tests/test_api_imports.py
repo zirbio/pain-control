@@ -204,3 +204,158 @@ def test_import_healthmetrics_csv(client_with_healthmetrics_csv):
     data = response.json()
     assert data["files_processed"] == 1
     assert data["days_imported"] == 1
+
+
+# v2 workout CSV header used by Health Auto Export from ~2026-03-28 onward.
+_V2_WORKOUT_HEADER = (
+    "Type,Start,End,Duration,Total Energy (kJ),Active Energy (kJ),"
+    "Max Heart Rate (bpm),Avg Heart Rate (bpm),Distance (km),"
+    "Avg Speed (km/hr),Step Count (count)\n"
+)
+
+
+@pytest.fixture()
+def client_with_v2_workouts(tmp_path, monkeypatch):
+    """Test client with a v2-format Workouts CSV in the imports directory."""
+    engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
+    Base.metadata.create_all(engine)
+    TestSession = sessionmaker(bind=engine)
+
+    imports_dir = tmp_path / "imports"
+    imports_dir.mkdir()
+
+    workout_content = _V2_WORKOUT_HEADER + (
+        "Golf,2026-04-06 16:32,2026-04-06 18:35,02:02:45,4343,3436,141,105.78,3.59,1.76,5068\n"
+        "Pilates,2026-04-06 09:03,2026-04-06 10:02,00:58:41,1315,918.18,127,93.75,,,100\n"
+    )
+    (imports_dir / "Workouts-2026-04-06.csv").write_text(workout_content)
+
+    def override_get_db():
+        session = TestSession()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    monkeypatch.setattr("backend.api.routers.imports.get_imports_dir", lambda: str(imports_dir))
+    yield TestClient(app)
+    app.dependency_overrides.clear()
+
+
+def test_import_v2_workouts_csv_end_to_end(client_with_v2_workouts):
+    """v2 workout CSVs go end-to-end through the persist function."""
+    response = client_with_v2_workouts.post("/api/imports/apple-health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["errors"] == []
+    assert data["workouts_imported"] == 2
+
+    entries = client_with_v2_workouts.get("/api/entries").json()
+    entry = next((e for e in entries if e["workout_records"]), None)
+    assert entry is not None
+    workouts = entry["workout_records"]
+    assert len(workouts) == 2
+
+    workout_types = {w["workout_type"] for w in workouts}
+    assert workout_types == {"Golf", "Pilates"}
+
+    # v2 has no intensity column → both records must store None
+    assert all(w["intensity"] is None for w in workouts)
+
+    golf = next(w for w in workouts if w["workout_type"] == "Golf")
+    assert golf["max_hr"] == 141
+    assert golf["avg_hr"] == 105
+    assert abs(golf["distance_km"] - 3.59) < 0.01
+
+
+def test_import_v2_workouts_idempotent(client_with_v2_workouts):
+    """Re-importing the same v2 workout file does not create duplicate rows."""
+    r1 = client_with_v2_workouts.post("/api/imports/apple-health").json()
+    r2 = client_with_v2_workouts.post("/api/imports/apple-health").json()
+    assert r1["workouts_imported"] == r2["workouts_imported"] == 2
+
+    entries = client_with_v2_workouts.get("/api/entries").json()
+    total_workouts = sum(len(e["workout_records"]) for e in entries)
+    assert total_workouts == 2  # not 4 — delete-then-insert behavior holds
+
+
+def test_import_workouts_unknown_header_returns_error_not_500(tmp_path, monkeypatch):
+    """Unknown workout headers surface in errors[] without crashing the endpoint."""
+    engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
+    Base.metadata.create_all(engine)
+    TestSession = sessionmaker(bind=engine)
+
+    imports_dir = tmp_path / "imports"
+    imports_dir.mkdir()
+    (imports_dir / "Workouts-future.csv").write_text(
+        "Activity,Started,Ended,Length\nYoga,2026-05-01 08:00,2026-05-01 08:45,45:00\n"
+    )
+
+    def override_get_db():
+        session = TestSession()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    monkeypatch.setattr("backend.api.routers.imports.get_imports_dir", lambda: str(imports_dir))
+    client = TestClient(app)
+
+    response = client.post("/api/imports/apple-health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["workouts_imported"] == 0
+    assert any("Unrecognized workout CSV header" in e for e in data["errors"])
+    assert any("Workouts-future.csv" in e for e in data["errors"])
+    app.dependency_overrides.clear()
+
+
+def test_import_mixed_v1_and_v2_workout_files(tmp_path, monkeypatch):
+    """Mixed v1 + v2 files in same imports dir are parsed independently."""
+    engine = create_engine(f"sqlite:///{tmp_path / 'test.db'}")
+    Base.metadata.create_all(engine)
+    TestSession = sessionmaker(bind=engine)
+
+    imports_dir = tmp_path / "imports"
+    imports_dir.mkdir()
+
+    # v1 (Spanish) — covers a different date than v2 to avoid delete-then-insert collision
+    v1_content = (
+        "Workout Type,Start,End,Duration,"
+        "Energía Activa (kJ),"
+        "Frecuencia Cardíaca Máxima (bpm),"
+        "Frecuencia Cardíaca Promedio (bpm),"
+        "Distancia (km),Conteo de Pasos\n"
+        "Pilates,2026-03-25 09:00,2026-03-25 10:00,01:00:00,1100,135,105,0,150\n"
+    )
+    (imports_dir / "Workouts-2026-03-25.csv").write_text(v1_content)
+
+    v2_content = _V2_WORKOUT_HEADER + (
+        "Golf,2026-04-06 16:32,2026-04-06 18:35,02:02:45,4343,3436,141,105.78,3.59,1.76,5068\n"
+    )
+    (imports_dir / "Workouts-2026-04-06.csv").write_text(v2_content)
+
+    def override_get_db():
+        session = TestSession()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    monkeypatch.setattr("backend.api.routers.imports.get_imports_dir", lambda: str(imports_dir))
+    client = TestClient(app)
+
+    response = client.post("/api/imports/apple-health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["errors"] == []
+    assert data["workouts_imported"] == 2
+
+    entries = client.get("/api/entries").json()
+    workout_dates = {e["date"] for e in entries if e["workout_records"]}
+    assert "2026-03-25" in workout_dates
+    assert "2026-04-06" in workout_dates
+    app.dependency_overrides.clear()
