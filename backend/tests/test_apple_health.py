@@ -253,3 +253,134 @@ def test_normalize_workout_type_unknown_passthrough(caplog):
     result = normalize_workout_type("Escalada en Roca")
     assert result == "Escalada en Roca"
     assert "Unknown workout type" in caplog.text
+
+
+def test_parse_workouts_csv_v2_english_format(tmp_path):
+    """v2 format: Health Auto Export switched to English headers (~Mar 2026)."""
+    csv_file = tmp_path / "Workouts-2026-04-06.csv"
+    csv_file.write_text(
+        "Type,Start,End,Duration,Total Energy (kJ),Active Energy (kJ),"
+        "Max Heart Rate (bpm),Avg Heart Rate (bpm),Distance (km),"
+        "Avg Speed (km/hr),Step Count (count),Step Cadence (spm),"
+        "Swimming Stroke Count (count),Swim Stoke Cadence (spm),"
+        "Flights Climbed (count),Elevation Ascended (m),Elevation Descended (m)\n"
+        "Golf,2026-04-06 16:32,2026-04-06 18:35,02:02:45,4343,3436,"
+        "141,105.78,3.59,1.76,5068,41.29,,,,,\n"
+        "Pilates,2026-04-06 09:03,2026-04-06 10:02,00:58:41,1315,918.18,"
+        "127,93.75,,,100,1.7,,,,,\n"
+    )
+    importer = AppleHealthImporter()
+    workouts = importer.parse_workouts_csv(csv_file)
+
+    assert len(workouts) == 2
+
+    golf = workouts[0]
+    assert golf.workout_type == "Golf"
+    assert golf.date == datetime.date(2026, 4, 6)
+    assert abs(golf.duration_min - 122.75) < 0.1
+    assert golf.max_hr == 141
+    assert golf.avg_hr == 105
+    assert abs(golf.active_energy_kj - 3436) < 0.01
+    assert abs(golf.distance_km - 3.59) < 0.01
+    assert golf.steps == 5068
+    # v2 has no intensity column
+    assert golf.intensity is None
+
+    pilates = workouts[1]
+    assert pilates.workout_type == "Pilates"
+    assert pilates.date == datetime.date(2026, 4, 6)
+    assert pilates.max_hr == 127
+    assert pilates.avg_hr == 93
+    assert abs(pilates.active_energy_kj - 918.18) < 0.01
+    # Distance column present but empty for indoor Pilates
+    assert pilates.distance_km is None
+    assert pilates.steps == 100
+    assert pilates.intensity is None
+
+
+def test_parse_workouts_csv_unknown_header_raises(tmp_path):
+    """Unknown header schema must raise loudly, not silently return []."""
+    csv_file = tmp_path / "Workouts-future.csv"
+    csv_file.write_text(
+        "Activity,Started,Ended,Length\nYoga,2026-05-01 08:00,2026-05-01 08:45,45:00\n"
+    )
+    importer = AppleHealthImporter()
+    with pytest.raises(ValueError, match="Unrecognized workout CSV header"):
+        importer.parse_workouts_csv(csv_file)
+
+
+def test_parse_workouts_csv_v2_unknown_workout_type_passthrough(tmp_path, caplog):
+    """v2 with an unmapped Type value passes through and logs a warning."""
+    csv_file = tmp_path / "Workouts-2026-04-07.csv"
+    csv_file.write_text(
+        "Type,Start,End,Duration,Active Energy (kJ),"
+        "Max Heart Rate (bpm),Avg Heart Rate (bpm),"
+        "Distance (km),Step Count (count)\n"
+        "Pickleball,2026-04-07 18:00,2026-04-07 19:00,01:00:00,800,145,120,,500\n"
+    )
+    importer = AppleHealthImporter()
+    with caplog.at_level("WARNING"):
+        workouts = importer.parse_workouts_csv(csv_file)
+    assert len(workouts) == 1
+    assert workouts[0].workout_type == "Pickleball"
+    assert "Unknown workout type" in caplog.text
+
+
+def test_parse_workouts_csv_v2_empty_file(tmp_path):
+    """v2 with only the header row returns []."""
+    csv_file = tmp_path / "Workouts-empty-v2.csv"
+    csv_file.write_text(
+        "Type,Start,End,Duration,Active Energy (kJ),"
+        "Max Heart Rate (bpm),Avg Heart Rate (bpm),"
+        "Distance (km),Step Count (count)\n"
+    )
+    importer = AppleHealthImporter()
+    assert importer.parse_workouts_csv(csv_file) == []
+
+
+def test_parse_workouts_csv_v2_skips_rows_missing_required_fields(tmp_path):
+    """v2 rows without Type or Start are silently skipped (not crashed)."""
+    csv_file = tmp_path / "Workouts-partial-v2.csv"
+    csv_file.write_text(
+        "Type,Start,End,Duration,Active Energy (kJ),"
+        "Max Heart Rate (bpm),Avg Heart Rate (bpm),"
+        "Distance (km),Step Count (count)\n"
+        ",2026-04-06 09:00,2026-04-06 10:00,01:00:00,500,140,110,,100\n"
+        "Yoga,,,,,,,,\n"
+        "Pilates,2026-04-06 11:00,2026-04-06 12:00,01:00:00,400,130,100,,80\n"
+    )
+    importer = AppleHealthImporter()
+    workouts = importer.parse_workouts_csv(csv_file)
+    assert len(workouts) == 1
+    assert workouts[0].workout_type == "Pilates"
+
+
+def test_parse_workouts_csv_v2_missing_end_time(tmp_path):
+    """v2 row with Start but no End still parses, end_time stays None."""
+    csv_file = tmp_path / "Workouts-no-end-v2.csv"
+    csv_file.write_text(
+        "Type,Start,End,Duration,Active Energy (kJ),"
+        "Max Heart Rate (bpm),Avg Heart Rate (bpm),"
+        "Distance (km),Step Count (count)\n"
+        "Caminata,2026-04-06 08:00,,30:00,200,120,90,2.0,2500\n"
+    )
+    importer = AppleHealthImporter()
+    workouts = importer.parse_workouts_csv(csv_file)
+    assert len(workouts) == 1
+    assert workouts[0].end_time is None
+    assert workouts[0].duration_min is not None
+    assert abs(workouts[0].duration_min - 30.0) < 0.1
+
+
+def test_parse_workouts_csv_v2_duration_two_parts(tmp_path):
+    """v2 duration in MM:SS format parses correctly (shared parser with v1)."""
+    csv_file = tmp_path / "Workouts-mmss-v2.csv"
+    csv_file.write_text(
+        "Type,Start,End,Duration,Active Energy (kJ),"
+        "Max Heart Rate (bpm),Avg Heart Rate (bpm),"
+        "Distance (km),Step Count (count)\n"
+        "Estiramientos,2026-04-06 07:00,2026-04-06 07:15,15:00,80,95,75,,0\n"
+    )
+    importer = AppleHealthImporter()
+    w = importer.parse_workouts_csv(csv_file)[0]
+    assert abs(w.duration_min - 15.0) < 0.1
