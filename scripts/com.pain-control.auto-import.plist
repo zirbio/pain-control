@@ -12,6 +12,7 @@
     <key>WatchPaths</key>
     <array>
         <string>/Users/silvio_requena/Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/macOS-Silvio-Salud</string>
+        <string>/Users/silvio_requena/Library/Mobile Documents/iCloud~com~ifunography~HealthExport/Documents/macOS-Silvio-Workouts</string>
     </array>
     <key>ThrottleInterval</key>
     <integer>60</integer>
